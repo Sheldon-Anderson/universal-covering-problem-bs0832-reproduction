@@ -1,0 +1,9 @@
+[project]
+name = "universal-cover-bs0832-reproduction"
+version = "0.1.0"
+description = "Final verification package for a modern reproduction of the Brass-Sharifi 0.832 lower-bound certificate."
+requires-python = ">=3.10"
+dependencies = ["loguru>=0.7.0"]
+
+[tool.setuptools]
+packages = ["app", "app.domain", "scripts"]

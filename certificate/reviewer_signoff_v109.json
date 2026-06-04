@@ -1,0 +1,38 @@
+{
+  "schema_version": "v109-reviewer-signoff-v1",
+  "reviewer_name_or_handle": "Niantao Xie (author self-review)",
+  "review_date": "2026-06-01",
+  "review_scope": "BS0832 v108/v109 final theorem signoff packet; 0.832 only; excludes any stronger lower-bound claim",
+  "reviewed_feedback_zip_sha256": "93b8d5d755f586912bc9a5c710e1571777c32939eab94dc0cfccaf69f4aadea6",
+  "global_decision": "accepted_with_minor_notes",
+  "accepted_obligations": [
+    "OB-A-001",
+    "OB-A-002",
+    "OB-A-003",
+    "OB-B-001",
+    "OB-B-002",
+    "OB-B-003",
+    "OB-B-004",
+    "OB-B-005",
+    "OB-C-001",
+    "OB-C-002",
+    "OB-C-003",
+    "OB-D-001",
+    "OB-E-001",
+    "OB-E-002",
+    "OB-E-003",
+    "OB-F-001",
+    "OB-F-002",
+    "OB-F-003",
+    "OB-F-004"
+  ],
+  "rejected_obligations": [],
+  "needs_revision_obligations": [],
+  "accepted_gaps": [
+    "FG1",
+    "FG2",
+    "FG3",
+    "FG4"
+  ],
+  "notes": "Author self-review: accepts the final signoff packet as a reproduction-complete candidate for the 0.832 Brass--Sharifi bound; does not claim any stronger numerical lower bound."
+}
