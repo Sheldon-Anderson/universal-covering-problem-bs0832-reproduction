@@ -6,6 +6,7 @@ from pathlib import Path
 from .io_utils import assert_zip_integrity, read_json_from_zip
 
 
+# v109 readiness-summary fields that must be true for the signed-candidate package.
 REQUIRED_TRUE_FLAGS = [
     "status",
     "source_integrity_passed",
@@ -26,6 +27,7 @@ REQUIRED_TRUE_FLAGS = [
     "red_team_signed_claim_audit_passed",
 ]
 
+# Boundary flags that must remain false in the public certificate package.
 REQUIRED_FALSE_FLAGS = [
     "theorem_ready",
     "bs0832_reproduced_theorem_level",
@@ -40,10 +42,12 @@ def validate_final_certificate(feedback_zip: Path) -> dict[str, object]:
     a reproducible certificate package rather than a formal proof assistant
     development.
     """
+    # First make sure the ZIP container itself is readable before inspecting members.
     assert_zip_integrity(feedback_zip)
     summary = read_json_from_zip(feedback_zip, "data/v109_readiness_summary.json")
     decision = read_json_from_zip(feedback_zip, "proof/final_theorem_signoff_decision_v109.json")
 
+    # The summary and decision JSON files are the public machine-readable status records.
     if summary.get("status") != "success":
         raise ValueError("Final certificate summary status is not success")
 

@@ -33,7 +33,7 @@ The final verifier checks these files together with the required inputs and the 
 
 ## Intermediate reference archives
 
-The `certificate/intermediate/` directory contains reference V106--V108 feedback archives.  They are used for reference-signed verification and for comparison with regenerated stage archives.
+The `certificate/intermediate/` directory contains reference V106-V108 feedback archives.  They are used for reference-signed verification and for comparison with regenerated stage archives.
 
 ## Paper
 

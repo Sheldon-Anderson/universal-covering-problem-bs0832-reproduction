@@ -1,12 +1,12 @@
-# A Reproducible Certificate for the Brass--Sharifi Lower Bound
+# A Reproducible Certificate for the Brass-Sharifi Lower Bound
 
-This repository contains the public replay package for a certificate-based reproduction of the Brass--Sharifi lower bound in Lebesgue's universal cover problem.  The mathematical bound being reproduced is the published convex lower bound
+This repository contains the public replay package for a certificate-based reproduction of the Brass-Sharifi lower bound in Lebesgue's universal cover problem.  The mathematical bound being reproduced is the published convex lower bound
 
 ```text
 A(v) >= 0.832.
 ```
 
-The Brass--Sharifi paper is the mathematical source of the bound.  This repository does not change the numerical value.  Its purpose is to make the computational part of the Brass--Sharifi argument replayable as a finite certificate: a recorded adaptive ledger, terminal-route replay data, local lower-bound certificates, integrity checks, and a final proof-obligation/signoff layer.
+The Brass-Sharifi paper is the mathematical source of the bound.  This repository does not change the numerical value.  Its purpose is to make the computational part of the Brass-Sharifi argument replayable as a finite certificate: a recorded adaptive ledger, terminal-route replay data, local lower-bound certificates, integrity checks, and a final proof-obligation/signoff layer.
 
 ## 1. Lebesgue's universal covering problem
 
@@ -15,10 +15,10 @@ A planar set is a universal cover for sets of diameter one if every planar set o
 Brass and Sharifi proved the lower bound `0.832` for the convex problem.  They used three diameter-one test sets: a disk, an equilateral triangle, and a regular pentagon.  After a normalization, the disk is fixed, the triangle is translated, and the pentagon is rotated and translated.  The lower-bound computation studies the area of the convex hull of these three test sets over the normalized placement domain.
 
 <p align="center">
-  <img src="assets/figures/geometry.png" alt="Normalized placement of the three Brass--Sharifi test sets" width="45%">
+  <img src="assets/figures/geometry.png" alt="Normalized placement of the three Brass-Sharifi test sets" width="45%">
 </p>
 
-## 2. What Brass--Sharifi proved
+## 2. What Brass-Sharifi proved
 
 Brass and Sharifi reduced the convex lower-bound problem to a three-test-set placement problem.  Their proof combines geometric estimates with a computer search and establishes that the relevant convex hull area is always at least `0.832`.  This implies that every convex universal cover has area at least `0.832`.
 
@@ -26,7 +26,7 @@ The published paper describes the method and reports aggregate computation count
 
 ## 3. What this repository adds
 
-This repository supplies that certificate layer.  It organizes the Brass--Sharifi computation as a finite record that can be checked by scripts:
+This repository supplies that certificate layer.  It organizes the Brass-Sharifi computation as a finite record that can be checked by scripts:
 
 1. an adaptive ledger recording the subdivision tree;
 2. a terminal-route replay recording the terminal subdomains;
@@ -56,9 +56,9 @@ admissible domain
   <img src="assets/figures/certificate_flow.png" alt="Certificate flow" width="35%">
 </p>
 
-## 5. Stage labels V106--V109
+## 5. Stage labels V106-V109
 
-The labels `V106`--`V109` are public stage labels inherited from the development history of this reproduction package.  They are shorthand for versions `v0.10.6`--`v0.10.9`.  They are not mathematical constants and not theorem numbers.
+The labels `V106`-`V109` are public stage labels inherited from the development history of this reproduction package.  They are shorthand for versions `v0.10.6`-`v0.10.9`.  They are not mathematical constants and not theorem numbers.
 
 <table>
   <thead>
@@ -142,11 +142,11 @@ universal-cover-bs0832-reproduction/
     </tr>
     <tr>
       <td align="center" valign="middle"><code>certificate/intermediate/</code></td>
-      <td align="center" valign="middle">Reference V106--V108 feedback archives used for comparison and reference-signed validation</td>
+      <td align="center" valign="middle">Reference V106-V108 feedback archives used for comparison and reference-signed validation</td>
     </tr>
     <tr>
       <td align="center" valign="middle"><code>paper/</code></td>
-      <td align="center" valign="middle">Compiled PDF of the accompanying paper</td>
+      <td align="center" valign="middle">Compiled PDF associated with this certificate repository</td>
     </tr>
     <tr>
       <td align="center" valign="middle"><code>runs/</code></td>
@@ -356,6 +356,6 @@ A successful staged reproduction reports `status = success` in `runs/stage_all/s
 
 ## 16. Citation and license
 
-Please cite the Brass--Sharifi paper for the original lower-bound theorem.  If you use this repository, cite the accompanying paper and this repository once a public archive or DOI is available.
+Please cite the Brass-Sharifi paper for the original lower-bound theorem.  If you use this repository, cite the accompanying paper and this repository once a public archive or DOI is available.
 
 The code in this repository is released under the license in `LICENSE`.

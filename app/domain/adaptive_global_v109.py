@@ -2,11 +2,11 @@
 
 This step consumes the v0.10.8 reproduction-complete candidate package and
 makes the largest proof-boundary-safe move toward finalizing the reproduction of
-Brass--Sharifi's 0.832 lower bound:
+Brass-Sharifi's 0.832 lower bound:
 
 1. Validate that v108 is a reproduction-complete candidate.
 2. Convert v108 lemmas/gaps/artifact bindings into explicit proof obligations.
-3. Adjudicate the remaining formalization gaps FG1--FG4 into a finite reviewer
+3. Adjudicate the remaining formalization gaps FG1-FG4 into a finite reviewer
    signoff gate.
 4. Emit a reviewer signoff schema/template, line-numbered manuscript, and
    artifact-to-manuscript crosswalk.
@@ -264,7 +264,7 @@ def build_proof_obligations(summary: dict, lemma_rows: List[dict], binding_rows:
         ("OB-E-001", "L6", "branch_b_adopted", "Branch B enlarged-domain replay route is the adopted domain route.", "A1;A2;A10;A11", "domain gate closed candidate by Branch B", "high"),
         ("OB-E-002", "L6", "branch_a_not_claimed", "Branch A symbolic range reduction is not claimed closed.", "A10;A11", "BranchA_symbolic_proof_unclosed", "high"),
         ("OB-E-003", "L6", "domain_route_scope", "The final theorem statement scope is the adopted Branch-B replay domain route.", "A10;A11", "uses_BranchB_route=true", "high"),
-        ("OB-F-001", "L7", "final_aggregation", "The final aggregation combines only L1--L6 candidate lemmas.", "A11", "claim_dependency_dag_acyclic=true", "high"),
+        ("OB-F-001", "L7", "final_aggregation", "The final aggregation combines only L1-L6 candidate lemmas.", "A11", "claim_dependency_dag_acyclic=true", "high"),
         ("OB-F-002", "L7", "claim_exact_0832", "The final lower-bound claim is exactly A(v) >= 0.832.", "A11", "contains_0832_claim; does_not_claim_083201", "high"),
         ("OB-F-003", "L7", "083201_isolated", "The eight 0.83201 stress failures are isolated from the BS0832 claim.", "A12", "target_083201_proved=false; stress_failures_083201=8", "high"),
         ("OB-F-004", "L7", "proof_boundary", "Proof text and metadata keep theorem_ready false until signoff.", "A11", "proof_boundary_violations=0", "high"),

@@ -12,6 +12,7 @@ from .io_utils import write_json, sha256_file
 from .manifest import parse_sha256sums
 from .signoff import validate_signoff
 
+# Source archives needed to reproduce the staged certificate chain.
 REQUIRED_INPUTS = [
     "inputs/feedback_v050_h004_local_proof_freeze_main.zip",
     "inputs/feedback_v086_true_arb_and_local_tensor_port_v1.zip",
@@ -22,12 +23,14 @@ REQUIRED_INPUTS = [
     "inputs/feedback_v105_bs0832_domain_resolution_final_signoff_and_conditional_enlarged_domain_execution.zip",
 ]
 
+# Reference intermediate archives bundled for comparison and signed validation.
 REQUIRED_INTERMEDIATE_FILES = [
     "certificate/intermediate/feedback_v106_bs0832_branchB_domain_and_final_kernel_closure_sprint.zip",
     "certificate/intermediate/feedback_v107_bs0832_final_theorem_release_candidate_and_independent_review_bundle.zip",
     "certificate/intermediate/feedback_v108_bs0832_theorem_level_reproduction_closure_attempt_and_final_signoff_package.zip",
 ]
 
+# Final public certificate files checked by the fast verifier.
 REQUIRED_CERTIFICATE_FILES = [
     "certificate/feedback_v109_signed_author_self_review.zip",
     "certificate/reviewer_signoff_v109.json",
@@ -35,6 +38,7 @@ REQUIRED_CERTIFICATE_FILES = [
     "certificate/SHA256SUMS.txt",
 ]
 
+# Compiled manuscript distributed with the public repository.
 PAPER_FILE = "paper/A_Reproducible_Certificate_for_the_Brass_Sharifi_Lower_Bound.pdf"
 
 
@@ -70,20 +74,24 @@ def verify_repository(root: Path, output_dir: Path) -> dict[str, Any]:
     logger.info("Starting BS0832 final repository verification")
     logger.info("Repository root: {}", root)
 
+    # Presence checks fail early with a clear message before any hash or signoff validation.
     required = REQUIRED_INPUTS + REQUIRED_INTERMEDIATE_FILES + REQUIRED_CERTIFICATE_FILES + [PAPER_FILE]
     missing = [rel for rel in required if not (root / rel).is_file()]
     if missing:
         raise FileNotFoundError(f"Missing required files: {missing}")
     logger.info("Required file presence check passed: {} files", len(required))
 
+    # The checksum file is the repository-level integrity record for public artifacts.
     checked_hashes = verify_sha256sums(root, root / "certificate" / "SHA256SUMS.txt")
     logger.info("SHA256 manifest check passed: {} files", len(checked_hashes))
 
+    # The signed v109 archive carries the final certificate decision used by the fast path.
     certificate_summary = validate_final_certificate(
         root / "certificate" / "feedback_v109_signed_author_self_review.zip"
     )
     logger.info("Final certificate archive check passed")
 
+    # The signoff is bound to the reference v108 archive through its SHA256 digest.
     signoff_summary = validate_signoff(
         root / "certificate" / "reviewer_signoff_v109.json",
         root / "certificate" / "intermediate" / "feedback_v108_bs0832_theorem_level_reproduction_closure_attempt_and_final_signoff_package.zip",

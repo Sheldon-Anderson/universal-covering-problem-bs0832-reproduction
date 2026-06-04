@@ -1,6 +1,6 @@
 # Certificate structure
 
-This repository organizes the Brass--Sharifi `0.832` computation as a finite certificate chain.
+This repository organizes the Brass-Sharifi `0.832` computation as a finite certificate chain.
 
 ## Mathematical statement
 
@@ -10,7 +10,7 @@ The placement-level statement checked by the certificate is
 A(v) >= 0.832
 ```
 
-for all admissible normalized placements of the disk, equilateral triangle, and regular pentagon used in the Brass--Sharifi three-test-set route.  The accompanying paper explains how this placement statement implies the convex universal-cover lower bound.
+for all admissible normalized placements of the disk, equilateral triangle, and regular pentagon used in the Brass-Sharifi three-test-set route.  The accompanying paper explains how this placement statement implies the convex universal-cover lower bound.
 
 ## Certificate layers
 
@@ -30,7 +30,7 @@ The public certificate has four main layers.
 | V108 | reproduction closure and artifact-to-obligation binding |
 | V109 | final signoff adjudication and author self-review validation |
 
-The labels are repository stage names, inherited from development versions v0.10.6--v0.10.9.  They are not theorem numbers.
+The labels are repository stage names, inherited from development versions v0.10.6-v0.10.9.  They are not theorem numbers.
 
 ## Reference-signed and generated-chain modes
 

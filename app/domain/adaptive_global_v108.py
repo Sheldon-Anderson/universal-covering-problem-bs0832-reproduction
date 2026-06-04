@@ -2,7 +2,7 @@
 
 This step consumes the v0.10.7 final theorem release-candidate review bundle and
 makes the largest proof-boundary-safe move toward completing the reproduction of
-Brass--Sharifi's 0.832 lower bound:
+Brass-Sharifi's 0.832 lower bound:
 
 1. Validate the v107 release-candidate bundle and source-hash binding.
 2. Convert the artifact/review bundle into a proof-manuscript candidate.
@@ -361,7 +361,7 @@ def build_lemma_registry(v107_summary: dict) -> List[dict]:
         {
             "lemma_id": "L7",
             "lemma_name": "BS0832 aggregation theorem candidate",
-            "statement_candidate": "Combining the Branch-B domain route, terminal route dispatch, directed interval, local tensor, and h004 bridge lemmas yields the reproduction-candidate lower bound A(v) >= 0.832 for the adopted Brass--Sharifi three-test-set domain.",
+            "statement_candidate": "Combining the Branch-B domain route, terminal route dispatch, directed interval, local tensor, and h004 bridge lemmas yields the reproduction-candidate lower bound A(v) >= 0.832 for the adopted Brass-Sharifi three-test-set domain.",
             "depends_on": "L1;L2;L3;L4;L5;L6",
             "artifact_inputs": "v107 release candidate bundle;v108 proof manuscript candidate",
             "hash_audit_inputs": "all v107 hash audit summaries",
@@ -375,7 +375,7 @@ def build_lemma_registry(v107_summary: dict) -> List[dict]:
 
 def build_claim_dag() -> Tuple[List[dict], List[dict], str, bool, List[str]]:
     nodes = [
-        {"node_id": "D0", "node_type": "domain_assumption", "label": "Brass--Sharifi normalized three-test-set domain", "status": "adopted_candidate"},
+        {"node_id": "D0", "node_type": "domain_assumption", "label": "Brass-Sharifi normalized three-test-set domain", "status": "adopted_candidate"},
         {"node_id": "L1", "node_type": "lemma", "label": "Adaptive full ledger closure", "status": "complete_candidate"},
         {"node_id": "L2", "node_type": "lemma", "label": "Terminal route dispatch coverage", "status": "complete_candidate"},
         {"node_id": "L3", "node_type": "lemma", "label": "Directed interval certificate", "status": "complete_candidate"},
@@ -477,7 +477,7 @@ Let
 v = (rho, x3, y3, x5, y5)
 ```
 
-be an admissible Brass--Sharifi three-test-set placement in the adopted
+be an admissible Brass-Sharifi three-test-set placement in the adopted
 Branch-B replay domain: the unit-diameter disk is fixed at the origin, the
 unit-diameter equilateral triangle is translated by `(x3, y3)`, and the
 unit-diameter regular pentagon is rotated by `rho` and translated by `(x5, y5)`.
@@ -506,7 +506,7 @@ closed.
 def proof_overview_text(summary: dict) -> str:
     return f"""# BS0832 proof overview candidate
 
-The proof-manuscript candidate follows the Brass--Sharifi three-test-set route
+The proof-manuscript candidate follows the Brass-Sharifi three-test-set route
 with parameters `(rho, x3, y3, x5, y5)`.  The v0.10.8 package converts the
 v0.10.7 artifact release candidate into a structured proof manuscript candidate.
 
@@ -542,7 +542,7 @@ def full_proof_draft_text(summary: dict) -> str:
 
 ## 1. Setup
 
-We use the Brass--Sharifi three-test-set normalization with parameter vector
+We use the Brass-Sharifi three-test-set normalization with parameter vector
 `v = (rho, x3, y3, x5, y5)`.  The disk is fixed at the origin, the equilateral
 triangle is translated, and the regular pentagon is rotated and translated.  The
 quantity to be bounded is the convex-hull area `A(v)`.
@@ -593,7 +593,7 @@ For each terminal route, the route dispatch sends the route to exactly one of th
 three accepted candidate proof components: directed interval, local tensor, or
 h004 bridge.  Each component supplies a candidate lower bound at or above
 `0.832` after its recorded guards.  Therefore the v0.10.8 package is a
-reproduction-complete candidate for the old Brass--Sharifi lower bound
+reproduction-complete candidate for the old Brass-Sharifi lower bound
 `A(v) >= 0.832` over the Branch-B replay domain.
 
 ## 8. Boundary and non-claims
@@ -906,7 +906,7 @@ def run_v108(
     write_json(dirs["release"] / "BS0832_REPRODUCTION_CLOSURE_CANDIDATE_MANIFEST.json", release_manifest)
     write_text(dirs["release"] / "BS0832_REPRODUCTION_COMPLETE_CANDIDATE_BOUNDARY.md", release_text("BS0832 reproduction-complete candidate boundary", """
 This v0.10.8 package is the reproduction-closure attempt and final signoff
-package for the old Brass--Sharifi `0.832` lower-bound route.  It may mark
+package for the old Brass-Sharifi `0.832` lower-bound route.  It may mark
 `bs0832_reproduction_complete_candidate=true` when the v107 release candidate,
 manuscript candidate, lemma registry, claim DAG, artifact binding, and red-team
 proof-text audit all pass.

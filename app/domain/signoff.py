@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .io_utils import read_json, sha256_file
 
+# Blocking proof obligations expected in the public author self-review file.
 EXPECTED_OBLIGATIONS = [
     "OB-A-001",
     "OB-A-002",
@@ -27,7 +28,9 @@ EXPECTED_OBLIGATIONS = [
     "OB-F-004",
 ]
 
+# Remaining formalization-gap identifiers accepted by the signoff record.
 EXPECTED_GAPS = ["FG1", "FG2", "FG3", "FG4"]
+# Global decisions that count as accepting the final signoff packet.
 ACCEPTED_GLOBAL_DECISIONS = {"accepted", "accepted_with_minor_notes"}
 
 
@@ -41,6 +44,7 @@ def validate_signoff(signoff_path: Path, reviewed_feedback_zip: Path) -> dict[st
     """
     signoff = read_json(signoff_path)
 
+    # These fields make the signoff machine-checkable rather than free-form prose.
     required_fields = [
         "schema_version",
         "reviewer_name_or_handle",
@@ -64,6 +68,7 @@ def validate_signoff(signoff_path: Path, reviewed_feedback_zip: Path) -> dict[st
     if signoff["global_decision"] not in ACCEPTED_GLOBAL_DECISIONS:
         raise ValueError("Global decision does not accept the signoff packet")
 
+    # The signoff must accept exactly the public obligation set: no missing and no extras.
     accepted = set(signoff["accepted_obligations"])
     expected = set(EXPECTED_OBLIGATIONS)
     if accepted != expected:
@@ -83,6 +88,7 @@ def validate_signoff(signoff_path: Path, reviewed_feedback_zip: Path) -> dict[st
     if accepted_gaps != set(EXPECTED_GAPS):
         raise ValueError("Accepted formalization gaps do not match expected list")
 
+    # Bind the signoff to the reviewed reference archive. A regenerated ZIP needs its own signoff.
     reviewed_digest = sha256_file(reviewed_feedback_zip)
     if signoff["reviewed_feedback_zip_sha256"] != reviewed_digest:
         raise ValueError("Signoff SHA256 does not match the reviewed feedback archive")

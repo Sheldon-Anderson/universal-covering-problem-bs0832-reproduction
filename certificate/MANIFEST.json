@@ -1,5 +1,5 @@
 {
-  "schema_version": "bs0832-public-manifest-v0.8",
+  "schema_version": "bs0832-public-manifest-v0.10",
   "file_count": 53,
   "files": [
     {
@@ -14,18 +14,18 @@
     },
     {
       "path": "ARTIFACTS.md",
-      "size_bytes": 1726,
-      "sha256": "4a3b21a1f825f686c9f6a6ad194ed7f2d4b65ae28e599d309ba555e8513fce4e"
+      "size_bytes": 1725,
+      "sha256": "527dbb05e47074abdd24798bf54a100f6619a9bc9a29711961e570c437355ae2"
     },
     {
       "path": "CERTIFICATE.md",
-      "size_bytes": 2312,
-      "sha256": "f46b97722e565996d933beb098a943990619283fb7984a7b847e7f4e28abac52"
+      "size_bytes": 2309,
+      "sha256": "a2cd1792ee83e58aab56349653125bf69916eb70aa5997000dddbc2287c2a195"
     },
     {
       "path": "CITATION.cff",
-      "size_bytes": 617,
-      "sha256": "be067e0a356351573c0d226127d815ad495f3c295c1a71a0a3f7f30797c4787a"
+      "size_bytes": 614,
+      "sha256": "cb857a0cff9bbec1105e928333be936956780aaef026245644f66e88838452cd"
     },
     {
       "path": "EXPECTED_OUTPUTS.md",
@@ -39,13 +39,13 @@
     },
     {
       "path": "README.md",
-      "size_bytes": 15294,
-      "sha256": "41826deae5157c54575974af757398887738c138f0a95e79a4ff436a6b92f9ae"
+      "size_bytes": 15300,
+      "sha256": "bb6e1dc367de4b85f423b7e0acd5ab49d5e232490a3750ba5d0a6b95cc95760f"
     },
     {
       "path": "README.zh-CN.md",
-      "size_bytes": 13683,
-      "sha256": "1201609074916fb8e8d2134bf36305d977d7f28f9796b4142969fefa5d37289c"
+      "size_bytes": 13671,
+      "sha256": "a130b96752f82fe9ee21b9ce1c8611b29eee992028f9abe61972a1c2afe51a34"
     },
     {
       "path": "app/__init__.py",
@@ -69,23 +69,23 @@
     },
     {
       "path": "app/domain/adaptive_global_v108.py",
-      "size_bytes": 65350,
-      "sha256": "46cbed0f8dfe593cf66d8d87685b5edbff64349d3a72e28178c126d94f03bfaf"
+      "size_bytes": 65342,
+      "sha256": "de7deef51fa9485000647748eeb75f7bb3966cab41bb6a6063005c6d335ee178"
     },
     {
       "path": "app/domain/adaptive_global_v109.py",
-      "size_bytes": 53578,
-      "sha256": "09c58db15c672478dfbc4b842d32cdbd740c13a17c0547ab559a86b14a57d5da"
+      "size_bytes": 53575,
+      "sha256": "ed1914947911084ba4b4bc043cce4647507e6ada517e4959176cf69ee75155f7"
     },
     {
       "path": "app/domain/certificate_checks.py",
-      "size_bytes": 3074,
-      "sha256": "297c5537f73b642fb5881596581e41e4513b6ad248a87170ced9677055ebbb19"
+      "size_bytes": 3409,
+      "sha256": "e7d2b4230c5315c09ea54092e65a6bb97d3e760daeae0e615d4fae01eb7ebe0d"
     },
     {
       "path": "app/domain/final_verifier.py",
-      "size_bytes": 4737,
-      "sha256": "02cc851756daed501f4a6906be4e85288a3e7cd510676b0ebbcca366b1a77189"
+      "size_bytes": 5366,
+      "sha256": "ac11e8ffc12b4d8798acadaae9e3ca82cd98ccacb3e41a14ec0e4dec27522b11"
     },
     {
       "path": "app/domain/io_utils.py",
@@ -99,8 +99,8 @@
     },
     {
       "path": "app/domain/signoff.py",
-      "size_bytes": 3227,
-      "sha256": "6bea21be287d79fd6dc2e9011899819a2e700289c9f2914e28cd592fe6337924"
+      "size_bytes": 3720,
+      "sha256": "cfc0c65a12424a6bd8cf3ffa70dca202a0919e7e75e80dde26d6710b969144dd"
     },
     {
       "path": "app/domain/stage_common.py",
@@ -159,8 +159,8 @@
     },
     {
       "path": "certificate/reviewer_signoff_v109.json",
-      "size_bytes": 1081,
-      "sha256": "27f543f098b59638946d3fe0202ae010f29860177586970d95e9891a869ee2e9"
+      "size_bytes": 1080,
+      "sha256": "bd402fc6fcc056016dd04cace4d0fc3c7a2e86545aa254d85435ed289855307d"
     },
     {
       "path": "environment.yml",
@@ -204,8 +204,8 @@
     },
     {
       "path": "paper/A_Reproducible_Certificate_for_the_Brass_Sharifi_Lower_Bound.pdf",
-      "size_bytes": 357939,
-      "sha256": "a364041402e711f948a6f76cdc238a39501664999701d8c46e9d9585902b8fc6"
+      "size_bytes": 382651,
+      "sha256": "ab1034d8f1e8f06623e79bfcbc01d2a7c2a643669b4b87eb8aa31d701d11a204"
     },
     {
       "path": "pyproject.toml",
