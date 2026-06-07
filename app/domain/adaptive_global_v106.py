@@ -16,7 +16,7 @@ one larger, but still proof-boundary-safe, move:
    may set `theorem_ready_candidate=true`, but it never sets `theorem_ready=true`.
 
 Strict boundary: this script does NOT claim theorem-level BS0832 reproduction,
-does NOT prove 0.83201, and does NOT convert candidate kernels into a formal
+does NOT prove a stronger numerical target, and does NOT convert candidate kernels into a formal
 published theorem without external proof review.  It is designed to compress the
 remaining blockers into explicit, auditable final-kernel/theorem-review items.
 """
@@ -39,12 +39,15 @@ from typing import Dict, Iterable, Iterator, List, Optional, Tuple
 
 from loguru import logger
 
+# Stage identity written into v106 feedback metadata and status files.
 VERSION = "v0.10.6-bs0832-branchB-domain-and-final-kernel-closure-sprint"
 SCHEMA_VERSION = "v106-branchB-domain-final-kernel-closure-v2"
 STEP_NAME = "84_v106_bs0832_branchB_domain_and_final_kernel_closure_sprint"
 ARTIFACT_PREFIX = "v106"
 FEEDBACK_NAME = "feedback_v106_bs0832_branchB_domain_and_final_kernel_closure_sprint.zip"
 
+# Public reference counts expected from the BS0832 replay artifacts.
+# They are consistency checks for the certificate records, not new assumptions.
 REFERENCE_COUNTS = {
     "adaptive_parent_child_edges": 379_192,
     "terminal_route_rows": 356_816,
@@ -55,12 +58,14 @@ REFERENCE_COUNTS = {
     "h004_witnesses": 282,
 }
 
+# Terminal-route dispatch totals expected for the three local families.
 EXPECTED_ROUTE_COUNTS = {
     "true_directed_interval_port_v1": 338_367,
     "true_local_tensor_port_v1": 18_380,
     "h004_bridge_containment": 69,
 }
 
+# Proof-boundary flags that must stay false in public certificate runs.
 STRICT_BOUNDARY_FLAGS = {
     "bs0832_reproduced_theorem_level": False,
     "target_083201_proved": False,
@@ -130,10 +135,12 @@ V050 = {
 
 
 def now_utc() -> str:
+    """Return an ISO-8601 UTC timestamp for stage metadata."""
     return datetime.now(timezone.utc).isoformat()
 
 
 def _nt_long_path(path: Path) -> str:
+    """Return a Windows long-path-safe string for filesystem calls."""
     s = str(path)
     if os.name != "nt":
         return s
@@ -146,6 +153,7 @@ def _nt_long_path(path: Path) -> str:
 
 
 def ensure_parent(path: Path) -> None:
+    """Create the parent directory for a file path when needed."""
     if os.name == "nt":
         os.makedirs(_nt_long_path(path.parent), exist_ok=True)
     else:
@@ -153,6 +161,7 @@ def ensure_parent(path: Path) -> None:
 
 
 def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
+    """Create the stage output directory tree and return named paths."""
     names = [
         "data", "status", "log", "manifest", "audit", "domain", "gates", "gap",
         "proof", "report", "replay", "reproducibility", "enlarged_domain",
@@ -166,6 +175,7 @@ def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
 
 
 def write_csv(path: Path, fieldnames: List[str], rows: Iterable[dict]) -> int:
+    """Write dictionaries to a UTF-8 CSV file with stable field order."""
     ensure_parent(path)
     count = 0
     with open(_nt_long_path(path), "w", encoding="utf-8", newline="") as f:
@@ -178,12 +188,14 @@ def write_csv(path: Path, fieldnames: List[str], rows: Iterable[dict]) -> int:
 
 
 def write_json(path: Path, data: dict) -> None:
+    """Write JSON data with deterministic indentation and UTF-8 encoding."""
     ensure_parent(path)
     with open(_nt_long_path(path), "w", encoding="utf-8") as f:
         f.write(json.dumps(data, indent=2, ensure_ascii=False))
 
 
 def write_text(path: Path, text: str) -> None:
+    """Write UTF-8 text after creating the parent directory."""
     ensure_parent(path)
     with open(_nt_long_path(path), "w", encoding="utf-8") as f:
         f.write(text)
@@ -203,6 +215,7 @@ def log_line(log_path: Path, message: str) -> None:
 
 
 def sha256_file(path: Path) -> str:
+    """Compute a file SHA256 digest using streaming reads."""
     h = hashlib.sha256()
     with open(_nt_long_path(path), "rb") as f:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
@@ -211,6 +224,7 @@ def sha256_file(path: Path) -> str:
 
 
 def decimal_of(value: object, default: str = "0") -> Decimal:
+    """Convert a value to Decimal, returning a fallback on invalid input."""
     try:
         s = str(value).strip()
         if not s:
@@ -221,10 +235,12 @@ def decimal_of(value: object, default: str = "0") -> Decimal:
 
 
 def boolish(value: object) -> bool:
+    """Interpret common boolean-like status values used in certificate tables."""
     return str(value).strip().lower() in {"true", "1", "yes", "passed", "success"}
 
 
 def zip_has(zip_path: Path, member: str) -> bool:
+    """Return whether a ZIP archive contains the requested member."""
     if not zip_path or not zip_path.exists():
         return False
     try:
@@ -235,16 +251,19 @@ def zip_has(zip_path: Path, member: str) -> bool:
 
 
 def read_json_from_zip(zip_path: Path, member: str) -> dict:
+    """Read and decode a JSON member from a ZIP archive."""
     with zipfile.ZipFile(zip_path) as z:
         return json.loads(z.read(member).decode("utf-8"))
 
 
 def read_bytes_from_zip(zip_path: Path, member: str) -> bytes:
+    """Read raw bytes for a member stored in a ZIP archive."""
     with zipfile.ZipFile(zip_path) as z:
         return z.read(member)
 
 
 def iter_csv_from_zip(zip_path: Path, member: str, limit: int = 0) -> Iterator[dict]:
+    """Yield CSV rows from a ZIP member, optionally applying a row limit."""
     with zipfile.ZipFile(zip_path) as z:
         with z.open(member) as f:
             reader = csv.DictReader(io.TextIOWrapper(f, encoding="utf-8", newline=""))
@@ -255,6 +274,7 @@ def iter_csv_from_zip(zip_path: Path, member: str, limit: int = 0) -> Iterator[d
 
 
 def csv_header_from_zip(zip_path: Path, member: str) -> List[str]:
+    """Return the header fields of a CSV member in a ZIP archive."""
     with zipfile.ZipFile(zip_path) as z:
         with z.open(member) as f:
             return next(csv.reader(io.TextIOWrapper(f, encoding="utf-8", newline="")), [])
@@ -262,6 +282,7 @@ def csv_header_from_zip(zip_path: Path, member: str) -> List[str]:
 
 def make_feedback_zip(run_dir: Path, zip_path: Path) -> None:
     # Build outside run_dir first to avoid any platform-specific self-zip / partial-zip issues.
+    """Package a stage run directory into the public feedback ZIP format."""
     if zip_path.exists():
         zip_path.unlink()
     ensure_parent(zip_path)
@@ -279,6 +300,7 @@ def make_feedback_zip(run_dir: Path, zip_path: Path) -> None:
 
 
 def source_integrity(required: Dict[str, Path], optional: Dict[str, Optional[Path]]) -> Tuple[List[dict], bool]:
+    """Hash required and optional source archives and report missing inputs."""
     rows: List[dict] = []
     ok = True
     for role, path in required.items():
@@ -306,6 +328,7 @@ def source_integrity(required: Dict[str, Path], optional: Dict[str, Optional[Pat
 
 
 def validate_json_keys(zip_path: Path, member: str, required_keys: List[str]) -> Tuple[bool, List[str], List[str]]:
+    """Check that a JSON member contains the required top-level keys."""
     if not zip_has(zip_path, member):
         return False, [], required_keys
     try:
@@ -318,6 +341,7 @@ def validate_json_keys(zip_path: Path, member: str, required_keys: List[str]) ->
 
 
 def validate_csv_fields(zip_path: Path, member: str, required_fields: List[str]) -> Tuple[bool, List[str], List[str]]:
+    """Check that a CSV member exposes the required column names."""
     if not zip_has(zip_path, member):
         return False, [], required_fields
     try:
@@ -330,6 +354,7 @@ def validate_csv_fields(zip_path: Path, member: str, required_fields: List[str])
 
 
 def schema_validation(v105_zip: Path, v096_zip: Path, adaptive_zip: Path, v097_zip: Path, v086_zip: Path, v050_zip: Path) -> Tuple[List[dict], bool]:
+    """Validate the v106 input schemas across source certificate archives."""
     specs = [
         ("json", "v105_summary", v105_zip, V105["summary"], ["status", "near_ready_branch_B_required", "domain_branch_B_executable_replay_package_ready", "theorem_ready", "directed_failures_vs_0832", "tensor_failures_vs_0832", "h004_failures"]),
         ("csv", "v105_domain", v105_zip, V105["domain"], ["branch_id", "v105_decision_status", "branch_closed_candidate", "blocks_bs0832"]),
@@ -375,6 +400,7 @@ def schema_validation(v105_zip: Path, v096_zip: Path, adaptive_zip: Path, v097_z
 
 
 def boundary_audit(v105_zip: Path) -> Tuple[List[dict], int]:
+    """Check v105 boundary-audit rows for forbidden theorem-level claims."""
     rows: List[dict] = []
     violations = 0
     if zip_has(v105_zip, V105["boundary"]):
@@ -408,6 +434,7 @@ def boundary_audit(v105_zip: Path) -> Tuple[List[dict], int]:
 
 
 def inspect_v105_enlarged_package(v105_zip: Path) -> Tuple[List[dict], dict]:
+    """Inspect the embedded v105 enlarged-domain replay package."""
     rows: List[dict] = []
     stats = {"available": False, "nested_schema_passed": False, "preflight_passed_or_not_run": False}
     if not zip_has(v105_zip, V105["enlarged_package"]):
@@ -439,6 +466,7 @@ def inspect_v105_enlarged_package(v105_zip: Path) -> Tuple[List[dict], dict]:
 
 
 def audit_adaptive_ledger(adaptive_zip: Path, terminal_limit: int = 0, full_audit_output: Optional[Path] = None, progress_log: Optional[Path] = None, progress_interval: int = 100_000, allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Audit adaptive ledger counts, endpoint records, and terminal routes."""
     manifest = read_json_from_zip(adaptive_zip, LEDGER["manifest"])
     terminal_count = 0
     route_counts: Counter[str] = Counter()
@@ -552,6 +580,7 @@ def audit_adaptive_ledger(adaptive_zip: Path, terminal_limit: int = 0, full_audi
 
 
 def replay_terminal_routes(v097_zip: Path, limit: int = 0, out_csv: Optional[Path] = None, progress_log: Optional[Path] = None, progress_interval: int = 100_000, allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Replay terminal-route dispatch records from the external route ledger."""
     fieldnames = ["v106_route_rank", "terminal_box_id", "root_box_id", "route_family", "accepted_route", "certificate_artifact_id", "v097_external_replay_family_status", "v097_terminal_route_status", "v106_enlarged_domain_route_status", "v106_is_theorem_proof"]
     f = None
     w = None
@@ -616,6 +645,7 @@ def replay_terminal_routes(v097_zip: Path, limit: int = 0, out_csv: Optional[Pat
 
 
 def replay_directed(v097_zip: Path, v105_zip: Path, limit: int = 0, out_csv: Optional[Path] = None, accept_margin: Decimal = Decimal("0.0000001"), allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Check directed-interval replay rows and post-guard route margins."""
     v105_by_source: Dict[str, List[dict]] = defaultdict(list)
     v105_min_all: Optional[Decimal] = None
     v105_theorem_claims = 0
@@ -701,12 +731,13 @@ def replay_directed(v097_zip: Path, v105_zip: Path, limit: int = 0, out_csv: Opt
         {"check_id": "D3", "status": "passed" if missing_v105 == 0 else "failed", "detail": f"missing_v105_signoff={missing_v105}"},
         {"check_id": "D4", "status": "passed" if below_accept_margin == 0 else "failed", "detail": f"rows_below_or_equal_accept_margin={below_accept_margin}; accept_margin={accept_margin}"},
         {"check_id": "D5", "status": "passed" if v097_theorem_claims == 0 and v105_theorem_claims == 0 else "failed", "detail": f"theorem_claims v097={v097_theorem_claims} v105={v105_theorem_claims}"},
-        {"check_id": "D6", "status": "passed", "detail": f"0.83201 stress failures preserved={stress_failures}; non-BS0832-blocking"},
+        {"check_id": "D6", "status": "passed", "detail": f"stronger-bound stress records preserved={stress_failures}; non-BS0832-blocking"},
     ]
     return stats, summary_rows
 
 
 def replay_tensor(v097_zip: Path, v105_zip: Path, limit: int = 0, out_csv: Optional[Path] = None, accept_margin: Decimal = Decimal("0.0000001"), allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Check local tensor replay rows, packages, and route bindings."""
     v105_by_source: Dict[str, dict] = {}
     v105_theorem_claims = 0
     for row in iter_csv_from_zip(v105_zip, V105["tensor_signoff"], limit):
@@ -807,6 +838,7 @@ def replay_tensor(v097_zip: Path, v105_zip: Path, limit: int = 0, out_csv: Optio
 
 
 def replay_h004(v097_zip: Path, v105_zip: Path, v050_zip: Path, limit: int = 0, out_csv: Optional[Path] = None, allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Check h=0.004 bridge witnesses and residual route bindings."""
     v105_by_witness: Dict[str, dict] = {}
     v105_theorem_claims = 0
     for row in iter_csv_from_zip(v105_zip, V105["h004_signoff"], limit):
@@ -873,6 +905,7 @@ def replay_h004(v097_zip: Path, v105_zip: Path, v050_zip: Path, limit: int = 0, 
 
 
 def audit_v086_directed_kernel(v086_zip: Path, limit: int = 0, out_csv: Optional[Path] = None, accept_margin: Decimal = Decimal("0.0000001"), allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Audit v086 directed-port rows against the accepted margin interface."""
     v086_summary = read_json_from_zip(v086_zip, V086["summary"])
     fieldnames = ["v106_g2_rank", "source_identifier", "root_box_id", "v086_margin_vs_0832_after_true_port_guard", "v086_status_vs_0832", "v086_is_true_arb_proof", "v086_is_theorem_proof", "v106_g2_kernel_input_status"]
     f = None
@@ -949,12 +982,13 @@ def audit_v086_directed_kernel(v086_zip: Path, limit: int = 0, out_csv: Optional
         {"check_id": "G2-K4", "status": "passed" if theorem_claims == 0 and true_arb_claims == 0 else "failed", "detail": f"theorem_claims={theorem_claims}; true_arb_claims={true_arb_claims}"},
         {"check_id": "G2-K5", "status": "passed", "detail": f"duplicate_source_identifiers={duplicates}; source_identifier is multiset-bound, nonunique values are allowed and matched by ordered occurrence"},
         {"check_id": "G2-K6", "status": "passed" if summary_candidate_ready else "failed", "detail": f"v086_summary_candidate_ready={summary_candidate_ready}"},
-        {"check_id": "G2-K7", "status": "passed", "detail": f"0.83201 stress failures preserved={stress_failures}; non-BS0832-blocking"},
+        {"check_id": "G2-K7", "status": "passed", "detail": f"stronger-bound stress records preserved={stress_failures}; non-BS0832-blocking"},
     ]
     return stats, rows_out
 
 
 def audit_v086_tensor_kernel(v086_zip: Path, limit: int = 0, member_out_csv: Optional[Path] = None, package_out_csv: Optional[Path] = None, accept_margin: Decimal = Decimal("0.0000001"), allow_smoke_limits: bool = False) -> Tuple[dict, List[dict]]:
+    """Audit v086 tensor members and packages against the margin interface."""
     v086_summary = read_json_from_zip(v086_zip, V086["summary"])
     member_fields = ["v106_g3_rank", "package_id", "source_box_id", "root_box_id", "v086_margin_vs_0832_after_true_tensor_guard", "v086_status_vs_0832", "v086_is_true_tensor_proof", "v086_is_theorem_proof", "v106_g3_member_status"]
     mf = None
@@ -1111,6 +1145,7 @@ def audit_v086_tensor_kernel(v086_zip: Path, limit: int = 0, member_out_csv: Opt
 
 
 def copy_and_triage_stress_failures(v105_zip: Path) -> Tuple[List[dict], List[dict], int, str]:
+    """Copy and summarize carried stress records for the excluded stronger numerical claim."""
     rows: List[dict] = []
     root_counter: Counter[str] = Counter()
     object_counter: Counter[str] = Counter()
@@ -1122,7 +1157,7 @@ def copy_and_triage_stress_failures(v105_zip: Path) -> Tuple[List[dict], List[di
             obj = row.get("object_id", "")
             m = re.search(r"\.v073rho(\d+)", obj)
             out["rho_child"] = f"rho{m.group(1)}" if m else "unknown"
-            out["v106_observation"] = "0.83201-only stress failure preserved; excluded from BS0832 theorem package dry-freeze"
+            out["v106_observation"] = "stronger-bound-only stress record preserved; excluded from BS0832 theorem package dry-freeze"
             rows.append(out)
             root_counter[row.get("root_box_id", "")] += 1
             object_counter[out["rho_child"]] += 1
@@ -1137,7 +1172,7 @@ def copy_and_triage_stress_failures(v105_zip: Path) -> Tuple[List[dict], List[di
             "stress_failures": count,
             "min_margin_vs_083201": min_margin,
             "bs0832_blocking": "False",
-            "recommended_next_action": "defer to v0.11 0.83201-only repair; candidate strategies: split refinement, directed-bounder strengthening, or local patch for D060-00008276",
+            "recommended_next_action": "defer to a separate stronger-bound repair branch; candidate strategies: split refinement, directed-bounder strengthening, or local patch for D060-00008276",
         })
     for rho, count in object_counter.items():
         triage_rows.append({
@@ -1146,7 +1181,7 @@ def copy_and_triage_stress_failures(v105_zip: Path) -> Tuple[List[dict], List[di
             "stress_failures": count,
             "min_margin_vs_083201": min_margin,
             "bs0832_blocking": "False",
-            "recommended_next_action": "record rho-child concentration for future 0.83201 stress repair queue",
+            "recommended_next_action": "record rho-child concentration for future stronger-bound stress repair queue",
         })
     return rows, triage_rows, len(rows), min_margin
 
@@ -1191,7 +1226,7 @@ def audit_v086_directed_kernel_summary(v086_zip: Path, accept_margin: Decimal = 
         {"check_id": "G2-K4", "status": "passed" if not external_arb_kernel_proof else "failed", "detail": f"external_arb_kernel_proof_flag={external_arb_kernel_proof}; theorem claim remains false"},
         {"check_id": "G2-K5", "status": "passed", "detail": "full source_identifier multiset scan skipped by default; use --emit-kernel-witness-tables for full table"},
         {"check_id": "G2-K6", "status": "passed" if candidate_ready else "failed", "detail": f"v086_summary_candidate_ready={candidate_ready}"},
-        {"check_id": "G2-K7", "status": "passed", "detail": f"0.83201 stress failures preserved={stress}; non-BS0832-blocking"},
+        {"check_id": "G2-K7", "status": "passed", "detail": f"stronger-bound stress records preserved={stress}; non-BS0832-blocking"},
     ]
     return stats, rows_out
 
@@ -1271,6 +1306,7 @@ def run_v106(
     progress_interval: int = 100_000,
     log_level: str = "INFO",
 ) -> dict:
+    """Run the v106 Branch-B domain and final-kernel closure stage."""
     getcontext().prec = decimal_precision
     accept_margin_decimal = decimal_of(accept_margin, "0.0000001")
     run_dir = project_root / "runs" / run_id
@@ -1470,7 +1506,7 @@ def run_v106(
         {"rank": "1", "action_family": "final_review", "blocks_bs0832": "True_until_acceptance", "recommended_next_action": "If theorem_ready_candidate_dry_freeze is true, run independent final proof review/freeze; otherwise repair listed blockers."},
         {"rank": "2", "action_family": "external_arb_kernel", "blocks_bs0832": str(not g2_final_kernel_signoff_candidate), "recommended_next_action": "Review v106_G2_directed_external_arb_kernel_signoff_attempt.csv and witness table; promote only after formal outward-rounded kernel review."},
         {"rank": "3", "action_family": "local_tensor_theorem", "blocks_bs0832": str(not g3_final_tensor_theorem_candidate), "recommended_next_action": "Review v106_G3_local_tensor_theorem_kernel_signoff_attempt.csv and member/package witness tables."},
-        {"rank": "4", "action_family": "0.83201_future", "blocks_bs0832": "False", "recommended_next_action": "Defer 0.83201; repair D060-00008276 directed stress failures in a separate v0.11 branch."},
+        {"rank": "4", "action_family": "stronger_bound_future", "blocks_bs0832": "False", "recommended_next_action": "Defer the stronger numerical target; repair D060-00008276 directed stress failures in a separate stronger-bound branch."},
     ]
     write_csv(dirs["gap"] / f"{ARTIFACT_PREFIX}_next_action_queue.csv", list(next_actions[0].keys()), next_actions)
 
@@ -1604,11 +1640,11 @@ Status: `{summary['status']}`
 - directed rows/failures vs 0.832: `{summary['directed_rows']}` / `{summary['directed_failures_vs_0832']}`
 - tensor rows/packages/failures vs 0.832: `{summary['tensor_rows']}` / `{summary['tensor_packages']}` / `{summary['tensor_failures_vs_0832']}`
 - h004 rows/failures: `{summary['h004_rows']}` / `{summary['h004_failures']}`
-- 0.83201 stress failures preserved: `{summary['stress_failures_083201']}`
+- stronger-bound stress records preserved: `{summary['stress_failures_083201']}`
 
 ## Boundary
 
-v0.10.6 does not claim theorem-level BS0832 reproduction and does not prove 0.83201.  If `theorem_ready_candidate=true`, it means a candidate dry-freeze package is ready for final formal/human review; `theorem_ready` remains false by construction.
+v0.10.6 does not claim theorem-level BS0832 reproduction and does not prove a stronger numerical target.  If `theorem_ready_candidate=true`, it means a candidate dry-freeze package is ready for final formal/human review; `theorem_ready` remains false by construction.
 """
     write_text(dirs["report"] / f"{ARTIFACT_PREFIX}.md", report)
 

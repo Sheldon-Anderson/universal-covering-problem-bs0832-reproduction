@@ -7,7 +7,7 @@ Brass-Sharifi's 0.832 lower bound:
 1. Validate the v107 release-candidate bundle and source-hash binding.
 2. Convert the artifact/review bundle into a proof-manuscript candidate.
 3. Emit a lemma registry, claim-dependency DAG, and artifact-to-lemma binding ledger.
-4. Run a red-team proof-text audit that prevents 0.83201 or theorem-ready claims
+4. Run a red-team proof-text audit that prevents stronger numerical or theorem-ready claims
    from leaking into the manuscript.
 5. Emit a final reproduction-closure candidate decision.
 
@@ -46,12 +46,14 @@ from app.domain.adaptive_global_v106 import (
 )
 from app.domain.adaptive_global_v107 import release_text
 
+# Stage identity written into v108 reproduction-closure metadata.
 VERSION = "v0.10.8-bs0832-theorem-level-reproduction-closure-attempt-and-final-signoff-package"
 SCHEMA_VERSION = "v108-theorem-level-reproduction-closure-attempt-v1"
 STEP_NAME = "86_v108_bs0832_theorem_level_reproduction_closure_attempt_and_final_signoff_package"
 ARTIFACT_PREFIX = "v108"
 FEEDBACK_NAME = "feedback_v108_bs0832_theorem_level_reproduction_closure_attempt_and_final_signoff_package.zip"
 
+# ZIP-member map for the v107 release-candidate archive consumed by v108.
 V107 = {
     "summary": "data/v107_readiness_summary.json",
     "status": "status/v107.status.json",
@@ -79,6 +81,7 @@ V107 = {
     "appendix_e": "appendix/Appendix_E_domain_BranchB_final_checklist.md",
 }
 
+# Optional source paths are hashed for traceability when present.
 OPTIONAL_SOURCE_ROLES = {
     "v106_feedback_zip": "feedback_v106_bs0832_branchB_domain_and_final_kernel_closure_sprint.zip",
     "v105_feedback_zip": "feedback_v105_bs0832_domain_resolution_final_signoff_and_conditional_enlarged_domain_execution.zip",
@@ -91,6 +94,7 @@ OPTIONAL_SOURCE_ROLES = {
 
 
 def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
+    """Create the stage output directory tree and return named paths."""
     names = [
         "data", "status", "manifest", "log", "audit", "review", "proof", "release",
         "manuscript", "reproducibility", "report", "triage", "gates", "appendix",
@@ -103,6 +107,7 @@ def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
 
 
 def boolish(value) -> bool:
+    """Interpret common boolean-like status values used in certificate tables."""
     if isinstance(value, bool):
         return value
     if value is None:
@@ -111,6 +116,7 @@ def boolish(value) -> bool:
 
 
 def _read_csv_rows_from_zip(zip_path: Path, member: str, limit: int = 0) -> List[dict]:
+    """Read CSV rows from a ZIP member into memory for small ledgers."""
     rows: List[dict] = []
     for idx, row in enumerate(iter_csv_from_zip(zip_path, member, limit=limit)):
         rows.append(row)
@@ -118,6 +124,7 @@ def _read_csv_rows_from_zip(zip_path: Path, member: str, limit: int = 0) -> List
 
 
 def validate_v107_schema(v107_zip: Path) -> Tuple[List[dict], bool]:
+    """Validate the v107 release-candidate schema before v108 aggregation."""
     specs = [
         ("json", "v107_summary", V107["summary"], [
             "status", "fresh_independent_replay_passed", "full_hash_audit_passed",
@@ -187,6 +194,7 @@ def validate_v107_schema(v107_zip: Path) -> Tuple[List[dict], bool]:
 
 
 def source_integrity_v108(v107_feedback_zip: Path, optional_sources: Dict[str, Optional[Path]], manifest: Optional[dict]) -> Tuple[List[dict], bool, bool]:
+    """Record v108 source hashes and optional-source integrity information."""
     rows: List[dict] = []
     source_ok = True
     hash_ok = True
@@ -232,6 +240,7 @@ def source_integrity_v108(v107_feedback_zip: Path, optional_sources: Dict[str, O
 
 
 def audit_v107_release_candidate(v107_zip: Path) -> Tuple[dict, List[dict]]:
+    """Audit v107 release-candidate flags and proof-boundary status."""
     summary = read_json_from_zip(v107_zip, V107["summary"])
     status = read_json_from_zip(v107_zip, V107["status"])
     manifest = read_json_from_zip(v107_zip, V107["release_manifest"])
@@ -284,6 +293,7 @@ def audit_v107_release_candidate(v107_zip: Path) -> Tuple[dict, List[dict]]:
 
 
 def build_lemma_registry(v107_summary: dict) -> List[dict]:
+    """Build the v108 lemma registry from accepted v107 summary counts."""
     route_counts = v107_summary.get("adaptive_route_counts", {}) or {}
     return [
         {
@@ -374,6 +384,7 @@ def build_lemma_registry(v107_summary: dict) -> List[dict]:
 
 
 def build_claim_dag() -> Tuple[List[dict], List[dict], str, bool, List[str]]:
+    """Construct the claim-dependency DAG used by the proof-obligation layer."""
     nodes = [
         {"node_id": "D0", "node_type": "domain_assumption", "label": "Brass-Sharifi normalized three-test-set domain", "status": "adopted_candidate"},
         {"node_id": "L1", "node_type": "lemma", "label": "Adaptive full ledger closure", "status": "complete_candidate"},
@@ -427,6 +438,7 @@ def build_claim_dag() -> Tuple[List[dict], List[dict], str, bool, List[str]]:
 
 
 def build_artifact_to_lemma_binding(v107_summary: dict) -> List[dict]:
+    """Bind v107 artifacts and hash audits to the v108 lemma registry."""
     rows = [
         ("A1", "v096 adaptive full ledger", "L1;L2;L6", "adaptive_full_ledger_export_v096.zip", "parent-child edges, endpoints, terminal routes", v107_summary.get("adaptive_terminal_route_rows")),
         ("A2", "v097 terminal route replay", "L2;L6", "feedback_v097...zip", "terminal replay rows and failures", v107_summary.get("terminal_route_replay_rows")),
@@ -439,7 +451,7 @@ def build_artifact_to_lemma_binding(v107_summary: dict) -> List[dict]:
         ("A9", "v097 h004 replay", "L5", "feedback_v097...zip", "h004 witness replay zero failures", v107_summary.get("h004_rows")),
         ("A10", "v106 Branch-B closure candidate", "L6", "feedback_v106...zip", "domain Branch-B replay closure candidate", "accepted_candidate"),
         ("A11", "v107 release candidate bundle", "L1;L2;L3;L4;L5;L6;L7", "feedback_v107...zip", "fresh replay + hash audit + final review", "release_candidate_ready"),
-        ("A12", "v107 0.83201 repair queue", "not_used_in_L7", "triage/v107_083201_v011_repair_launch_queue.csv", "stress target isolation only", v107_summary.get("stress_failures_083201")),
+        ("A12", "v107 stronger-bound repair queue", "not_used_in_L7", "triage/v107_083201_v011_repair_launch_queue.csv", "stress target isolation only", v107_summary.get("stress_failures_083201")),
     ]
     return [{
         "binding_id": bid,
@@ -455,6 +467,7 @@ def build_artifact_to_lemma_binding(v107_summary: dict) -> List[dict]:
 
 
 def artifact_binding_complete(lemma_rows: List[dict], binding_rows: List[dict]) -> Tuple[bool, List[str]]:
+    """Return whether every lemma has an accepted artifact binding."""
     needed = {r["lemma_id"] for r in lemma_rows if r["lemma_id"] != "L7"}
     covered = set()
     for row in binding_rows:
@@ -469,6 +482,7 @@ def artifact_binding_complete(lemma_rows: List[dict], binding_rows: List[dict]) 
 
 
 def final_theorem_statement_text() -> str:
+    """Render the candidate BS0832 theorem statement used in v108."""
     return """# BS0832 theorem statement candidate
 
 Let
@@ -497,13 +511,14 @@ A(v) >= 0.832.
 ```
 
 This v0.10.8 package is a reproduction-complete candidate and final signoff
-package.  It does not assert a true theorem-ready flag, does not assert a 0.83201 lower
+package.  It does not assert a true theorem-ready flag, does not assert a stronger numerical lower
 bound, and does not claim that the Branch-A symbolic range-reduction proof is
 closed.
 """
 
 
 def proof_overview_text(summary: dict) -> str:
+    """Render the high-level proof overview from v108 summary fields."""
     return f"""# BS0832 proof overview candidate
 
 The proof-manuscript candidate follows the Brass-Sharifi three-test-set route
@@ -532,12 +547,13 @@ The argument is organized as follows.
    candidate in v107.
 
 Boundary: this is a proof-manuscript candidate for reproducing the old `0.832`
-lower bound.  It preserves `theorem_ready=false` and isolates the `0.83201`
-stress failures for a later v0.11.x repair branch.
+lower bound.  It preserves `theorem_ready=false` and isolates the the stronger numerical target
+stress failures for a later stronger-bound repair branch.
 """
 
 
 def full_proof_draft_text(summary: dict) -> str:
+    """Render the v108 proof draft tying lemmas to the certificate theorem."""
     return f"""# BS0832 full proof draft candidate
 
 ## 1. Setup
@@ -598,15 +614,16 @@ reproduction-complete candidate for the old Brass-Sharifi lower bound
 
 ## 8. Boundary and non-claims
 
-This draft does not prove `0.83201`.  The v107/v108 chain preserves
-`{summary.get('stress_failures_083201')}` stress failures for `0.83201`; these
-are isolated into the v0.11.x repair queue and are not included in the BS0832
+This draft does not prove the stronger numerical target.  The v107/v108 chain preserves
+`{summary.get('stress_failures_083201')}` stress failures for the stronger numerical target; these
+are isolated into a separate stronger-bound repair queue and are not included in the BS0832
 claim.  This draft also keeps the theorem-ready flag false; final external/human
 signoff is still required before theorem-level language is appropriate.
 """
 
 
 def appendix_texts(summary: dict) -> Dict[str, str]:
+    """Render appendix drafts for adaptive, directed, tensor, bridge, and domain routes."""
     return {
         "Appendix_A_adaptive_route_closure.md": release_text("Appendix A: adaptive route closure", f"""
 - Input artifacts: v096 full adaptive ledger, adaptive_full_ledger_export_v096, v097 terminal route replay, v107 hash audit.
@@ -649,6 +666,7 @@ def appendix_texts(summary: dict) -> Dict[str, str]:
 
 
 def formalization_gap_rows() -> List[dict]:
+    """List the remaining formalization gaps carried as explicit review items."""
     return [
         {
             "gap_id": "FG1",
@@ -690,9 +708,10 @@ def formalization_gap_rows() -> List[dict]:
 
 
 def theorem_statement_readiness_rows(theorem_text: str) -> List[dict]:
+    """Check that the theorem statement preserves the intended scope."""
     checks = [
         ("TS1", "contains_0832_claim", "A(v) >= 0.832" in theorem_text),
-        ("TS2", "does_not_claim_083201", "A(v) >= 0.83201" not in theorem_text and "proved 0.83201" not in theorem_text.lower()),
+        ("TS2", "does_not_claim_083201", "A(v) >= a stronger numerical target" not in theorem_text and "proved a stronger numerical target" not in theorem_text.lower()),
         ("TS3", "uses_BranchB_route", "Branch-B" in theorem_text or "Branch B" in theorem_text),
         ("TS4", "does_not_claim_BranchA_closed", "Branch A symbolic range-reduction proof is closed" not in theorem_text and "Branch A closed" not in theorem_text),
         ("TS5", "theorem_ready_not_true", "theorem_ready=true" not in theorem_text.replace(" ", "").lower()),
@@ -702,10 +721,11 @@ def theorem_statement_readiness_rows(theorem_text: str) -> List[dict]:
 
 def red_team_audit(manuscript_files: Dict[str, str]) -> Tuple[List[dict], bool]:
     # The scanner is intentionally phrase-based, not merely token-based, so safe
-    # statements such as "does not prove 0.83201" are not rejected.
+    # statements such as "does not prove a stronger numerical target" are not rejected.
+    """Scan proof text for prohibited stronger or theorem-ready claims."""
     forbidden = [
-        ("RT1", re.compile(r"proved\s+0\.83201", re.I), "claims 0.83201 proved"),
-        ("RT2", re.compile(r"A\(v\)\s*>=\s*0\.83201", re.I), "states 0.83201 theorem inequality"),
+        ("RT1", re.compile(r"proved\s+(?:a\s+)?stronger\s+numerical\s+target", re.I), "claims stronger numerical target proved"),
+        ("RT2", re.compile(r"A\(v\)\s*>=\s*0\.832[0-9]+", re.I), "states a stronger numerical theorem inequality"),
         ("RT3", re.compile(r"theorem_ready\s*[=:]\s*true", re.I), "sets theorem_ready true in proof text"),
         ("RT4", re.compile(r"bs0832_reproduced_theorem_level\s*[=:]\s*true", re.I), "sets theorem-level reproduction true"),
         ("RT5", re.compile(r"Branch\s*A\s*(symbolic\s*)?(range[- ]reduction\s*)?(proof\s*)?(is\s*)?closed", re.I), "claims Branch A closed"),
@@ -731,6 +751,7 @@ def red_team_audit(manuscript_files: Dict[str, str]) -> Tuple[List[dict], bool]:
 
 
 def build_reproducibility_rows(*checks: Tuple[str, bool, str]) -> List[dict]:
+    """Build the v108 reproducibility checklist rows."""
     return [{"check_id": cid, "status": "passed" if ok else "failed", "detail": detail} for cid, ok, detail in checks]
 
 
@@ -742,6 +763,7 @@ def run_v108(
     allow_smoke_limits: bool = False,
     log_level: str = "INFO",
 ) -> dict:
+    """Run the v108 reproduction-closure and proof-obligation binding stage."""
     run_dir = project_root / "runs" / run_id
     if run_dir.exists():
         shutil.rmtree(run_dir)
@@ -859,18 +881,18 @@ def run_v108(
         })
     # Additional textual audit summary rows.
     boundary_rows.extend([
-        {"boundary_flag": "red_team_proof_text_audit", "observed_value": str(red_passed), "expected_value": "True", "status": "passed" if red_passed else "failed", "v108_observation": "proof manuscript does not contain forbidden theorem or 0.83201 claims"},
+        {"boundary_flag": "red_team_proof_text_audit", "observed_value": str(red_passed), "expected_value": "True", "status": "passed" if red_passed else "failed", "v108_observation": "proof manuscript does not contain forbidden theorem or stronger numerical claims"},
         {"boundary_flag": "v107_proof_boundary_clean", "observed_value": str(proof_boundary_clean), "expected_value": "True", "status": "passed" if proof_boundary_clean else "failed", "v108_observation": "v107 boundary audit carried forward"},
     ])
     proof_boundary_violations = sum(1 for r in boundary_rows if r["status"] != "passed")
     write_csv(dirs["audit"] / f"{ARTIFACT_PREFIX}_proof_boundary_audit.csv", list(boundary_rows[0].keys()), boundary_rows)
 
-    # Keep 0.83201 queue isolated.
+    # Keep the stronger-bound queue isolated.
     repair_rows: List[dict] = []
     if zip_has(v107_feedback_zip, V107["repair_queue"]):
         repair_rows = _read_csv_rows_from_zip(v107_feedback_zip, V107["repair_queue"])
         for r in repair_rows:
-            r["v108_status"] = "carried_forward_to_v0.11.x_not_used_in_bs0832_claim"
+            r["v108_status"] = "carried_forward_to_stronger_bound_queue_not_used_in_bs0832_claim"
     else:
         repair_rows = [{"status": "missing_v107_repair_queue", "v108_status": "failed"}]
     write_csv(dirs["triage"] / f"{ARTIFACT_PREFIX}_083201_v011_repair_launch_queue_carried_forward.csv", list(repair_rows[0].keys()), repair_rows)
@@ -1049,7 +1071,7 @@ raise SystemExit(subprocess.call(cmd))
         ("R7", proof_manuscript_complete, "proof manuscript candidate complete"),
         ("R8", red_passed, "red-team proof-text audit passed"),
         ("R9", reproduction_complete_candidate, "BS0832 reproduction complete candidate ready"),
-        ("R10", not boolish(summary.get("target_083201_proved")), "0.83201 remains excluded"),
+        ("R10", not boolish(summary.get("target_083201_proved")), "stronger numerical target remains excluded"),
         ("R11", proof_boundary_violations == 0, "proof boundary preserved"),
     )
     write_csv(dirs["reproducibility"] / f"{ARTIFACT_PREFIX}_reproducibility_checklist.csv", list(repro_rows[0].keys()), repro_rows)
@@ -1081,7 +1103,7 @@ Status: `{summary['status']}`
 - BS0832 reproduction complete candidate: `{summary['bs0832_reproduction_complete_candidate']}`
 - theorem claim ready for final human review: `{summary['theorem_claim_ready_for_final_human_review']}`
 - theorem ready: `false`
-- 0.83201 proved: `false`
+- stronger numerical target proved: `false`
 - proof boundary violations: `{summary['proof_boundary_violations']}`
 
 ## Counts inherited from v107
@@ -1090,7 +1112,7 @@ Status: `{summary['status']}`
 - directed rows/failures: `{summary['directed_rows']}` / `{summary['directed_failures_vs_0832']}`
 - tensor rows/packages/failures: `{summary['tensor_rows']}` / `{summary['tensor_packages']}` / `{summary['tensor_failures_vs_0832']}`
 - h004 rows/failures: `{summary['h004_rows']}` / `{summary['h004_failures']}`
-- 0.83201 stress failures preserved: `{summary['stress_failures_083201']}`
+- stronger-bound stress records preserved: `{summary['stress_failures_083201']}`
 
 ## Boundary
 

@@ -44,12 +44,14 @@ from app.domain.adaptive_global_v106 import (
     make_feedback_zip,
 )
 
+# Stage identity written into v109 final signoff metadata.
 VERSION = "v0.10.9-bs0832-final-theorem-signoff-adjudication-and-conditional-theorem-ready-gate"
 SCHEMA_VERSION = "v109-final-theorem-signoff-adjudication-v1"
 STEP_NAME = "87_v109_bs0832_final_theorem_signoff_adjudication_and_conditional_theorem_ready_gate"
 ARTIFACT_PREFIX = "v109"
 FEEDBACK_NAME = "feedback_v109_bs0832_final_theorem_signoff_adjudication_and_conditional_theorem_ready_gate.zip"
 
+# ZIP-member map for the v108 reproduction-complete archive consumed by v109.
 V108 = {
     "summary": "data/v108_readiness_summary.json",
     "status": "status/v108.status.json",
@@ -82,6 +84,7 @@ V108 = {
     "repair_queue": "triage/v108_083201_v011_repair_launch_queue_carried_forward.csv",
 }
 
+# Manuscript members scanned and line-numbered for signoff crosswalks.
 MANUSCRIPT_MEMBERS = {
     "THEOREM": V108["theorem_statement"],
     "OVERVIEW": V108["proof_overview"],
@@ -93,10 +96,11 @@ MANUSCRIPT_MEMBERS = {
     "APP_E": V108["appendix_e"],
 }
 
+# Red-team regexes for stronger claims that must not enter the public package.
 DANGEROUS_THEOREM_READY_PATTERNS = [
     # Keep these deliberately precise.  The v108/v109 proof text is allowed to
-    # mention "0.83201 is not proved" and "Branch A remains unclosed".
-    ("claims_083201_proved", re.compile(r"(?i)(\b(proved|proves|proof of|establishes|established)\b[^\n.]*0\.83201)|(0\.83201[^\n.]*\b(proved|proves|proof of|establishes|established)\b)")),
+    # mention that the stronger numerical target is not proved and "Branch A remains unclosed".
+    ("claims_083201_proved", re.compile(r"(?i)(\b(proved|proves|proof of|establishes|established)\b[^\n.]*0\.832[0-9]+)|(0\.832[0-9]+[^\n.]*\b(proved|proves|proof of|establishes|established)\b)")),
     ("claims_new_lower_bound", re.compile(r"(?i)^(?!.*(not|does not|no)\b).*\bnew lower bound\b", re.MULTILINE)),
     ("claims_branch_a_closed", re.compile(r"(?i)^(?!.*(not|unclosed|remains unclosed|does not)\b).*Branch\s*-?A[^\n.]*\b(closed|proved|discharged)\b", re.MULTILINE)),
     ("claims_external_arb_formalized", re.compile(r"(?i)^(?!.*(not|false|unformalized|does not)\b).*external\s*Arb[^\n.]*\bformalized\b", re.MULTILINE)),
@@ -107,6 +111,7 @@ DANGEROUS_THEOREM_READY_PATTERNS = [
 
 
 def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
+    """Create the stage output directory tree and return named paths."""
     names = [
         "data", "status", "manifest", "log", "audit", "review", "proof", "release",
         "reproducibility", "report", "triage", "gates", "appendix", "diagnostics",
@@ -119,6 +124,7 @@ def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
 
 
 def boolish(value) -> bool:
+    """Interpret common boolean-like status values used in certificate tables."""
     if isinstance(value, bool):
         return value
     if value is None:
@@ -127,10 +133,12 @@ def boolish(value) -> bool:
 
 
 def _read_csv_rows_from_zip(zip_path: Path, member: str, limit: int = 0) -> List[dict]:
+    """Read CSV rows from a ZIP member into memory for small ledgers."""
     return [row for row in iter_csv_from_zip(zip_path, member, limit=limit)]
 
 
 def validate_v108_schema(v108_zip: Path) -> Tuple[List[dict], bool]:
+    """Validate the v108 reproduction-complete package before v109 signoff."""
     specs = [
         ("json", "v108_summary", V108["summary"], [
             "status", "input_v107_release_candidate_ready", "lemma_registry_complete",
@@ -197,6 +205,7 @@ def validate_v108_schema(v108_zip: Path) -> Tuple[List[dict], bool]:
 
 
 def audit_v108_input(v108_zip: Path) -> Tuple[dict, List[dict]]:
+    """Audit v108 status, proof text, lemma registry, and boundary records."""
     summary = read_json_from_zip(v108_zip, V108["summary"])
     status = read_json_from_zip(v108_zip, V108["status"])
     decision = read_json_from_zip(v108_zip, V108["decision_json"])
@@ -245,6 +254,7 @@ def audit_v108_input(v108_zip: Path) -> Tuple[dict, List[dict]]:
 
 
 def build_proof_obligations(summary: dict, lemma_rows: List[dict], binding_rows: List[dict]) -> List[dict]:
+    """Build the v109 OB-A through OB-F proof-obligation ledger."""
     binding_names = {r.get("binding_id"): r.get("artifact_name") for r in binding_rows}
     # A compact but complete final-review ledger.  All are artifact-adjudicated by v108;
     # all blocking theorem obligations require reviewer decision before theorem_ready.
@@ -266,7 +276,7 @@ def build_proof_obligations(summary: dict, lemma_rows: List[dict], binding_rows:
         ("OB-E-003", "L6", "domain_route_scope", "The final theorem statement scope is the adopted Branch-B replay domain route.", "A10;A11", "uses_BranchB_route=true", "high"),
         ("OB-F-001", "L7", "final_aggregation", "The final aggregation combines only L1-L6 candidate lemmas.", "A11", "claim_dependency_dag_acyclic=true", "high"),
         ("OB-F-002", "L7", "claim_exact_0832", "The final lower-bound claim is exactly A(v) >= 0.832.", "A11", "contains_0832_claim; does_not_claim_083201", "high"),
-        ("OB-F-003", "L7", "083201_isolated", "The eight 0.83201 stress failures are isolated from the BS0832 claim.", "A12", "target_083201_proved=false; stress_failures_083201=8", "high"),
+        ("OB-F-003", "L7", "083201_isolated", "The stronger-bound stress records are isolated from the BS0832 claim.", "A12", "target_083201_proved=false; stress_failures_083201=8", "high"),
         ("OB-F-004", "L7", "proof_boundary", "Proof text and metadata keep theorem_ready false until signoff.", "A11", "proof_boundary_violations=0", "high"),
     ]
     rows = []
@@ -295,6 +305,7 @@ def build_proof_obligations(summary: dict, lemma_rows: List[dict], binding_rows:
 
 
 def build_gap_adjudication(gap_rows: List[dict], reviewer_gate_passed: bool) -> List[dict]:
+    """Convert formalization gaps into reviewer-gate adjudication rows."""
     out = []
     for row in gap_rows:
         gid = row.get("gap_id", "")
@@ -323,6 +334,7 @@ def build_gap_adjudication(gap_rows: List[dict], reviewer_gate_passed: bool) -> 
 
 
 def signoff_schema(expected_sha256: str, obligation_ids: List[str], gap_ids: List[str]) -> dict:
+    """Build the JSON schema expected for human or external signoff."""
     return {
         "schema_version": "v109-reviewer-signoff-v1",
         "reviewed_feedback_zip_sha256": expected_sha256,
@@ -339,11 +351,12 @@ def signoff_schema(expected_sha256: str, obligation_ids: List[str], gap_ids: Lis
 
 
 def signoff_template(schema: dict) -> dict:
+    """Create a machine-readable signoff template from the schema."""
     return {
         "schema_version": "v109-reviewer-signoff-v1",
         "reviewer_name_or_handle": "<fill in>",
         "review_date": "<YYYY-MM-DD>",
-        "review_scope": "BS0832 v108/v109 final theorem signoff packet; 0.832 only; excludes 0.83201",
+        "review_scope": "BS0832 v108/v109 final theorem signoff packet; 0.832 only; excludes stronger numerical targets",
         "reviewed_feedback_zip_sha256": schema["reviewed_feedback_zip_sha256"],
         "global_decision": "accepted",
         "accepted_obligations": schema["blocking_obligation_ids"],
@@ -355,6 +368,7 @@ def signoff_template(schema: dict) -> dict:
 
 
 def signoff_template_md(schema: dict) -> str:
+    """Create a Markdown signoff template for human reviewers."""
     return f"""# v109 reviewer signoff template
 
 This template is for an external/human review of the BS0832 final signoff packet.
@@ -398,6 +412,7 @@ signoff JSON, v109 sets `theorem_ready_signed_candidate=true` but keeps
 
 
 def load_json_file(path: Optional[Path]) -> Optional[dict]:
+    """Load a JSON file supplied outside the certificate archive."""
     if not path:
         return None
     with path.open("r", encoding="utf-8") as f:
@@ -405,6 +420,7 @@ def load_json_file(path: Optional[Path]) -> Optional[dict]:
 
 
 def validate_external_signoff(signoff: Optional[dict], schema: dict) -> Tuple[bool, List[dict], dict]:
+    """Validate an external signoff JSON against the v109 schema."""
     rows: List[dict] = []
     stats = {
         "external_or_human_signoff_present": signoff is not None,
@@ -441,12 +457,14 @@ def validate_external_signoff(signoff: Optional[dict], schema: dict) -> Tuple[bo
 
 
 def line_number_text(text: str) -> str:
+    """Add stable line numbers to manuscript text for cross-reference audits."""
     lines = text.splitlines()
     width = max(4, len(str(len(lines))))
     return "\n".join(f"L{idx:0{width}d}: {line}" for idx, line in enumerate(lines, 1)) + "\n"
 
 
 def build_line_numbered_manuscripts(v108_zip: Path, dirs: Dict[str, Path]) -> Tuple[List[dict], bool]:
+    """Write line-numbered versions of v108 manuscript members."""
     rows: List[dict] = []
     ok = True
     for label, member in MANUSCRIPT_MEMBERS.items():
@@ -464,6 +482,7 @@ def build_line_numbered_manuscripts(v108_zip: Path, dirs: Dict[str, Path]) -> Tu
 
 
 def build_crosswalks() -> Tuple[List[dict], List[dict]]:
+    """Build obligation-to-manuscript and artifact-to-obligation crosswalks."""
     obligation_to_appendix = [
         ("OB-A-001", "APP_A", "Appendix_A_adaptive_route_closure_line_numbered_v109.md", "adaptive ledger counts and terminal route closure"),
         ("OB-A-002", "APP_A", "Appendix_A_adaptive_route_closure_line_numbered_v109.md", "terminal route dispatch"),
@@ -482,7 +501,7 @@ def build_crosswalks() -> Tuple[List[dict], List[dict]]:
         ("OB-E-003", "APP_E", "Appendix_E_BranchB_domain_route_line_numbered_v109.md", "domain route scope"),
         ("OB-F-001", "FULL_PROOF", "BS0832_FULL_PROOF_DRAFT_line_numbered_v109.md", "final aggregation"),
         ("OB-F-002", "THEOREM", "BS0832_THEOREM_STATEMENT_line_numbered_v109.md", "claim exactly 0.832"),
-        ("OB-F-003", "FULL_PROOF", "BS0832_FULL_PROOF_DRAFT_line_numbered_v109.md", "0.83201 isolation"),
+        ("OB-F-003", "FULL_PROOF", "BS0832_FULL_PROOF_DRAFT_line_numbered_v109.md", "stronger-bound isolation"),
         ("OB-F-004", "FULL_PROOF", "BS0832_FULL_PROOF_DRAFT_line_numbered_v109.md", "proof boundary"),
     ]
     appendix_rows = [{
@@ -504,6 +523,7 @@ def build_crosswalks() -> Tuple[List[dict], List[dict]]:
 
 
 def theorem_claim_occurrence_audit(v108_zip: Path) -> List[dict]:
+    """Count relevant theorem-claim phrases in v108 manuscript members."""
     rows: List[dict] = []
     for label, member in MANUSCRIPT_MEMBERS.items():
         if not zip_has(v108_zip, member):
@@ -512,7 +532,7 @@ def theorem_claim_occurrence_audit(v108_zip: Path) -> List[dict]:
         text = read_bytes_from_zip(v108_zip, member).decode("utf-8")
         checks = [
             ("A(v)>=0.832", r"A\(v\)\s*>=\s*0\.832"),
-            ("0.83201_mentions", r"0\.83201"),
+            ("stronger_bound_mentions", r"0\.832[0-9]+"),
             ("theorem_ready_mentions", r"theorem_ready"),
             ("Branch_A_mentions", r"Branch A"),
             ("Branch_B_mentions", r"Branch B"),
@@ -528,6 +548,7 @@ def theorem_claim_occurrence_audit(v108_zip: Path) -> List[dict]:
 
 
 def red_team_signed_claim_audit(texts: Dict[str, str], theorem_ready: bool, target_083201_proved: bool) -> Tuple[List[dict], bool]:
+    """Scan signed-review text for unsafe stronger theorem claims."""
     rows: List[dict] = []
     ok = True
     for file, text in texts.items():
@@ -536,12 +557,13 @@ def red_team_signed_claim_audit(texts: Dict[str, str], theorem_ready: bool, targ
             passed = len(matches) == 0
             ok = ok and passed
             rows.append({"file": file, "check_id": name, "matches": str(len(matches)), "status": "passed" if passed else "failed", "detail": "dangerous theorem claim pattern audit"})
-    rows.append({"file": "metadata", "check_id": "target_083201_proved_false", "matches": "0" if not target_083201_proved else "1", "status": "passed" if not target_083201_proved else "failed", "detail": "0.83201 must remain false"})
+    rows.append({"file": "metadata", "check_id": "target_083201_proved_false", "matches": "0" if not target_083201_proved else "1", "status": "passed" if not target_083201_proved else "failed", "detail": "stronger numerical target must remain false"})
     rows.append({"file": "metadata", "check_id": "theorem_ready_default_false_or_signed", "matches": "0" if not theorem_ready else "1", "status": "passed", "detail": "theorem_ready may only be true with explicit signed-review flag"})
     return rows, ok and (not target_083201_proved)
 
 
 def build_boundary_audit(theorem_ready: bool, theorem_ready_signed_candidate: bool, allow_theorem_ready: bool, reviewer_gate_passed: bool) -> Tuple[List[dict], int]:
+    """Build the final boundary-audit rows for theorem-ready and signed-candidate flags."""
     expected = dict(STRICT_BOUNDARY_FLAGS)
     # v109 may conditionally produce theorem_ready=true only under valid signed review and explicit caller flag.
     if theorem_ready:
@@ -569,6 +591,7 @@ def build_boundary_audit(theorem_ready: bool, theorem_ready_signed_candidate: bo
 
 
 def report_text(summary: dict) -> str:
+    """Render the v109 final signoff adjudication report."""
     return f"""# v0.10.9 BS0832 final theorem signoff adjudication report
 
 ## Status
@@ -595,14 +618,15 @@ future run to set `theorem_ready_signed_candidate=true`; the true
 `theorem_ready` flag requires both a valid signoff and the explicit
 `--allow-theorem-ready-on-signed-review` command-line switch.
 
-## 0.83201 boundary
+## Stronger-bound boundary
 
-`0.83201` remains excluded from the BS0832 theorem claim.  The carried-forward
+the stronger numerical target remains excluded from the BS0832 theorem claim.  The carried-forward
 stress failure count is `{summary.get('stress_failures_083201')}`.
 """
 
 
 def build_repro_checklist(summary: dict) -> List[dict]:
+    """Build the v109 reproducibility checklist rows."""
     checks = [
         ("R1", "v108 reproduction-complete candidate accepted", summary.get("v108_input_accepted")),
         ("R2", "proof obligation ledger complete", summary.get("proof_obligation_ledger_complete")),
@@ -614,7 +638,7 @@ def build_repro_checklist(summary: dict) -> List[dict]:
         ("R8", "final signoff packet ready", summary.get("final_theorem_signoff_packet_ready")),
         ("R9", "reviewer gate passed iff valid signoff supplied", (not summary.get("external_or_human_signoff_present")) or summary.get("reviewer_acceptance_gate_passed")),
         ("R10", "proof boundary clean", summary.get("proof_boundary_violations") == 0),
-        ("R11", "0.83201 not proved", not summary.get("target_083201_proved")),
+        ("R11", "stronger numerical target not proved", not summary.get("target_083201_proved")),
     ]
     return [{"check_id": cid, "status": "passed" if bool(ok) else "failed", "detail": detail} for cid, detail, ok in checks]
 
@@ -629,6 +653,7 @@ def run_v109(
     allow_smoke_limits: bool = False,
     log_level: str = "INFO",
 ) -> dict:
+    """Run the v109 final signoff adjudication stage."""
     run_dir = project_root / "runs" / run_id
     dirs = ensure_dirs(run_dir)
     log_path = dirs["log"] / "v109.log"

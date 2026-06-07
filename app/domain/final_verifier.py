@@ -1,7 +1,6 @@
 """Final public verifier for the BS0832 reproduction repository."""
 from __future__ import annotations
 
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +8,7 @@ from loguru import logger
 
 from .certificate_checks import validate_final_certificate
 from .io_utils import write_json, sha256_file
-from .manifest import parse_sha256sums
+from .manifest import parse_sha256sums, validate_manifest_against_checked_hashes
 from .signoff import validate_signoff
 
 # Source archives needed to reproduce the staged certificate chain.
@@ -38,18 +37,19 @@ REQUIRED_CERTIFICATE_FILES = [
     "certificate/SHA256SUMS.txt",
 ]
 
-# Compiled manuscript distributed with the public repository.
-PAPER_FILE = "paper/A_Reproducible_Certificate_for_the_Brass_Sharifi_Lower_Bound.pdf"
 
-
-def verify_sha256sums(root: Path, sha256sums_path: Path) -> list[dict[str, str]]:
+def verify_sha256sums(root: Path, sha256sums_path: Path) -> list[dict[str, Any]]:
     """Verify all paths recorded in SHA256SUMS.txt.
 
     The function returns a compact list of checked paths and their digests for
     inclusion in the final verification summary.
+
+    Only certificate artifacts listed in SHA256SUMS.txt are checked here.
+    README files, paper files, figures, CI configuration, and source-code comments
+    may be updated without changing the certificate-artifact checksum gate.
     """
     expected = parse_sha256sums(sha256sums_path)
-    checked: list[dict[str, str]] = []
+    checked: list[dict[str, Any]] = []
     for rel_path, expected_digest in sorted(expected.items()):
         file_path = root / rel_path
         if not file_path.is_file():
@@ -57,7 +57,7 @@ def verify_sha256sums(root: Path, sha256sums_path: Path) -> list[dict[str, str]]
         actual_digest = sha256_file(file_path)
         if actual_digest != expected_digest:
             raise ValueError(f"SHA256 mismatch for {rel_path}")
-        checked.append({"path": rel_path, "sha256": actual_digest})
+        checked.append({"path": rel_path, "sha256": actual_digest, "size_bytes": file_path.stat().st_size})
     return checked
 
 
@@ -75,15 +75,21 @@ def verify_repository(root: Path, output_dir: Path) -> dict[str, Any]:
     logger.info("Repository root: {}", root)
 
     # Presence checks fail early with a clear message before any hash or signoff validation.
-    required = REQUIRED_INPUTS + REQUIRED_INTERMEDIATE_FILES + REQUIRED_CERTIFICATE_FILES + [PAPER_FILE]
+    # The compiled paper is distributed for convenience but is intentionally not part
+    # of the certificate-artifact checksum gate.
+    required = REQUIRED_INPUTS + REQUIRED_INTERMEDIATE_FILES + REQUIRED_CERTIFICATE_FILES
     missing = [rel for rel in required if not (root / rel).is_file()]
     if missing:
         raise FileNotFoundError(f"Missing required files: {missing}")
     logger.info("Required file presence check passed: {} files", len(required))
 
-    # The checksum file is the repository-level integrity record for public artifacts.
+    # The checksum file is the byte-level integrity record for certificate artifacts.
     checked_hashes = verify_sha256sums(root, root / "certificate" / "SHA256SUMS.txt")
-    logger.info("SHA256 manifest check passed: {} files", len(checked_hashes))
+    manifest_summary = validate_manifest_against_checked_hashes(
+        root / "certificate" / "MANIFEST.json",
+        checked_hashes,
+    )
+    logger.info("Certificate-artifact SHA256 check passed: {} files", len(checked_hashes))
 
     # The signed v109 archive carries the final certificate decision used by the fast path.
     certificate_summary = validate_final_certificate(
@@ -103,6 +109,7 @@ def verify_repository(root: Path, output_dir: Path) -> dict[str, Any]:
         "bs0832_final_repository_verification_passed": True,
         "required_file_count": len(required),
         "sha256_checked_file_count": len(checked_hashes),
+        "manifest_summary": manifest_summary,
         "certificate_summary": certificate_summary,
         "signoff_summary": signoff_summary,
         "theorem_ready_signed_candidate": True,

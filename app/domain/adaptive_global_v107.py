@@ -16,7 +16,7 @@ proof-boundary-safe move that is still reasonable on a Windows laptop:
 Strict boundary: this script may set theorem_release_candidate=true and
 bs0832_release_candidate_ready=true, but it intentionally keeps theorem_ready,
 bs0832_reproduced_theorem_level, target_083201_proved, and formal theorem flags
-false.  It does not prove the 0.832 theorem by itself and does not prove 0.83201.
+false.  It does not prove the 0.832 theorem by itself and does not prove a stronger numerical target.
 """
 from __future__ import annotations
 
@@ -76,12 +76,14 @@ from app.domain.adaptive_global_v106 import (
     copy_and_triage_stress_failures,
 )
 
+# Stage identity written into v107 release-candidate metadata.
 VERSION = "v0.10.7-bs0832-final-theorem-release-candidate-and-independent-review-bundle"
 SCHEMA_VERSION = "v107-final-theorem-release-candidate-independent-review-v1"
 STEP_NAME = "85_v107_bs0832_final_theorem_release_candidate_and_independent_review_bundle"
 ARTIFACT_PREFIX = "v107"
 FEEDBACK_NAME = "feedback_v107_bs0832_final_theorem_release_candidate_and_independent_review_bundle.zip"
 
+# ZIP-member map for the v106 feedback archive consumed by v107.
 V106 = {
     "summary": "data/v106_readiness_summary.json",
     "status": "status/v106.status.json",
@@ -99,6 +101,7 @@ V106 = {
 
 
 def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
+    """Create the stage output directory tree and return named paths."""
     dirs = ensure_dirs_v106(run_dir)
     for name in ["release", "appendix", "review", "hash_audit", "checklists"]:
         dirs[name] = run_dir / name
@@ -107,10 +110,12 @@ def ensure_dirs(run_dir: Path) -> Dict[str, Path]:
 
 
 def _csv_rows_from_zip(zip_path: Path, member: str, limit: int = 0) -> Iterator[dict]:
+    """Yield CSV rows from a ZIP member through the shared v106 reader."""
     yield from iter_csv_from_zip(zip_path, member, limit)
 
 
 def validate_v106_schema(v106_zip: Path) -> Tuple[List[dict], bool]:
+    """Validate the required v106 feedback members before v107 replay."""
     specs = [
         ("json", "v106_summary", V106["summary"], [
             "status", "branch_B_replay_closed_candidate", "domain_gate_closed_candidate_by_B",
@@ -172,6 +177,7 @@ def validate_v106_schema(v106_zip: Path) -> Tuple[List[dict], bool]:
 
 
 def audit_v106_candidate(v106_zip: Path) -> Tuple[dict, List[dict]]:
+    """Check v106 candidate status, boundary flags, and carried stress data."""
     summary = read_json_from_zip(v106_zip, V106["summary"])
     status = read_json_from_zip(v106_zip, V106["status"])
     proof = read_json_from_zip(v106_zip, V106["proof_json"])
@@ -238,6 +244,7 @@ def block_hash_csv_from_zip(
     header_text = ""
 
     def flush_block() -> None:
+        """Flush the current CSV block into the compact block-hash audit."""
         nonlocal block_index, block_count, block_hash, first_key, last_key
         if block_count == 0:
             return
@@ -299,6 +306,7 @@ def block_hash_csv_from_zip(
     return rows_out, stats
 
 def combine_hash_audits(*parts: List[dict]) -> List[dict]:
+    """Concatenate block-hash audit rows from multiple certificate tables."""
     rows: List[dict] = []
     for part in parts:
         rows.extend(part)
@@ -306,10 +314,12 @@ def combine_hash_audits(*parts: List[dict]) -> List[dict]:
 
 
 def checks_passed(rows: Iterable[dict]) -> bool:
+    """Return true when every check row has a passing status."""
     return all(str(r.get("status", "")).startswith("passed") for r in rows)
 
 
 def build_final_review_rows(summary_checks: List[Tuple[str, bool, str]]) -> List[dict]:
+    """Format final-review checks as CSV rows for the release bundle."""
     return [
         {"check_id": cid, "status": "passed" if ok else "failed", "detail": detail}
         for cid, ok, detail in summary_checks
@@ -317,6 +327,7 @@ def build_final_review_rows(summary_checks: List[Tuple[str, bool, str]]) -> List
 
 
 def release_text(title: str, body: str) -> str:
+    """Build a small Markdown release note with a title and body."""
     return f"# {title}\n\n{body.strip()}\n"
 
 
@@ -346,6 +357,7 @@ def run_v107(
     allow_smoke_limits: bool = False,
     log_level: str = "INFO",
 ) -> dict:
+    """Run the v107 independent replay and compact block-hash audit stage."""
     getcontext().prec = decimal_precision
     accept_margin_decimal = decimal_of(accept_margin, "0.0000001")
     run_dir = project_root / "runs" / run_id
@@ -625,13 +637,13 @@ def run_v107(
     ]
     write_csv(dirs["domain"] / f"{ARTIFACT_PREFIX}_BranchB_domain_final_acceptance.csv", list(branch_domain_rows[0].keys()), branch_domain_rows)
 
-    # 0.83201 triage remains separate.
+    # stronger-bound triage remains separate.
     stress_rows, triage_rows, stress_count, stress_min = copy_and_triage_stress_failures(v105_feedback_zip)
     write_csv(dirs["gap"] / f"{ARTIFACT_PREFIX}_083201_stress_failures.csv", list(stress_rows[0].keys()) if stress_rows else ["empty"], stress_rows)
     launch_rows: List[dict] = []
     for row in triage_rows:
         launch = dict(row)
-        launch["v107_repair_branch"] = "v0.11.x_083201_directed_repair"
+        launch["v107_repair_branch"] = "future_stronger_bound_directed_repair"
         launch["included_in_bs0832_theorem_claim"] = "False"
         launch_rows.append(launch)
     write_csv(dirs["triage"] / f"{ARTIFACT_PREFIX}_083201_v011_repair_launch_queue.csv", list(launch_rows[0].keys()) if launch_rows else ["empty"], launch_rows)
@@ -879,7 +891,7 @@ python .\\scripts\\85_v107_bs0832_final_theorem_release_candidate_and_independen
         {"check_id": "R5", "status": "passed" if full_hash_audit_passed else "failed", "detail": "full compact block-hash audit"},
         {"check_id": "R6", "status": "passed" if final_review_all_candidate else "pending", "detail": "BS0832 theorem release-candidate readiness"},
         {"check_id": "R7", "status": "passed" if boundary_clean else "failed", "detail": "proof boundary preserved"},
-        {"check_id": "R8", "status": "passed" if stress_count == 8 else "failed", "detail": "0.83201 failures preserved and isolated"},
+        {"check_id": "R8", "status": "passed" if stress_count == 8 else "failed", "detail": "stronger-bound failures preserved and isolated"},
     ]
     write_csv(dirs["reproducibility"] / f"{ARTIFACT_PREFIX}_reproducibility_checklist.csv", list(repro_rows[0].keys()), repro_rows)
 
@@ -913,7 +925,7 @@ Status: `{summary['status']}`
 - theorem package v16 final freeze candidate: `{summary['theorem_package_v16_final_freeze_candidate']}`
 - BS0832 release candidate ready: `{summary['bs0832_release_candidate_ready']}`
 - theorem ready: `false`
-- 0.83201 proved: `false`
+- stronger numerical target proved: `false`
 - proof boundary violations: `{summary['proof_boundary_violations']}`
 
 ## Counts
@@ -923,7 +935,7 @@ Status: `{summary['status']}`
 - directed rows/failures: `{summary['directed_rows']}` / `{summary['directed_failures_vs_0832']}`
 - tensor rows/packages/failures: `{summary['tensor_rows']}` / `{summary['tensor_packages']}` / `{summary['tensor_failures_vs_0832']}`
 - h004 rows/failures: `{summary['h004_rows']}` / `{summary['h004_failures']}`
-- 0.83201 stress failures preserved: `{summary['stress_failures_083201']}`
+- stronger-bound stress records preserved: `{summary['stress_failures_083201']}`
 
 ## Boundary
 
