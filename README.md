@@ -2,9 +2,9 @@
 
 This repository is an artifact and verification package for the Brass-Sharifi 0.832 lower bound in the **convex** version of Lebesgue's universal cover problem. The numerical lower bound is unchanged:
 
-$$
+```math
 \alpha_{\mathrm{cvx}} \geq 0.832.
-$$
+```
 
 The purpose of the repository is not to introduce a new lower bound. Its purpose is to organize the computational part of the Brass-Sharifi argument as a finite, inspectable certificate: source archives, an adaptive ledger, terminal-route replay data, local lower-bound certificates, compact integrity audits, and a proof-obligation/signoff layer. The accompanying manuscript is included under `paper/`.
 
@@ -24,22 +24,22 @@ Second, it gives a reproducibility workflow: reference certificate artifacts, a 
 
 Lebesgue's universal cover problem asks for a planar set that contains a congruent copy of every planar set of diameter one. In the convex version considered here, the covering set is required to be convex. Let
 
-$$
-\mathcal U_{\mathrm{cvx}}
+```math
+\mathcal{U}_{\mathrm{cvx}}
 =
 \left\{
-K \subset \mathbb R^2:
+K \subset \mathbb{R}^{2}:
 K \text{ is convex and contains a congruent copy of every diameter-one planar set}
 \right\}.
-$$
+```
 
 The convex quantity is
 
-$$
+```math
 \alpha_{\mathrm{cvx}}
 =
-\inf_{K\in\mathcal U_{\mathrm{cvx}}}\operatorname{area}(K).
-$$
+\inf_{K\in\mathcal{U}_{\mathrm{cvx}}}\mathrm{area}(K).
+```
 
 The Brass-Sharifi result gives the lower bound 0.832 for this convex quantity. This repository concerns only that convex lower-bound computation.
 
@@ -51,13 +51,13 @@ The Brass-Sharifi result gives the lower bound 0.832 for this convex quantity. T
 
 The computation uses three diameter-one test sets:
 
-$$
+```math
 C = \text{the disk of diameter }1,
 \qquad
 T = \text{the equilateral triangle of diameter }1,
 \qquad
-P_5 = \text{the regular pentagon of diameter }1.
-$$
+P_{5} = \text{the regular pentagon of diameter }1.
+```
 
 If a convex universal cover contains congruent copies of these three sets, then by convexity it also contains their convex hull. A uniform lower bound for the area of that hull is therefore a lower bound for the area of any convex universal cover.
 
@@ -65,41 +65,41 @@ If a convex universal cover contains congruent copies of these three sets, then 
 
 Following the Brass-Sharifi normalization used by the certificate model, the disk is fixed at the origin and the triangle orientation is fixed. A normalized placement is recorded by
 
-$$
-v=(\rho,x_3,y_3,x_5,y_5),
-$$
+```math
+v=(\rho,x_{3},y_{3},x_{5},y_{5}),
+```
 
 with
 
-$$
-u_3=(x_3,y_3),
+```math
+u_{3}=(x_{3},y_{3}),
 \qquad
-u_5=(x_5,y_5).
-$$
+u_{5}=(x_{5},y_{5}).
+```
 
-Here $u_3$ translates the triangle, $\rho$ rotates the pentagon, and $u_5$ translates the pentagon.
+Here $`u_{3}`$ translates the triangle, $`\rho`$ rotates the pentagon, and $`u_{5}`$ translates the pentagon.
 
 ### 3.3 The convex-hull area functional
 
-Let $R_\rho$ denote rotation by angle $\rho$. Define
+Let $`R_{\rho}`$ denote rotation by angle $`\rho`$. Define
 
-$$
-H(v)=\operatorname{conv}\left(C\cup(T+u_3)\cup(R_\rho P_5+u_5)\right),
-$$
+```math
+H(v)=\mathrm{conv}\left(C\cup(T+u_{3})\cup(R_{\rho} P_{5}+u_{5})\right),
+```
 
 and
 
-$$
-A(v)=\operatorname{area}(H(v)).
-$$
+```math
+A(v)=\mathrm{area}(H(v)).
+```
 
 The placement-level statement represented by the certificate is
 
-$$
+```math
 A(v)\geq 0.832
-$$
+```
 
-for every admissible normalized placement $v$ in the recorded reduced domain of the certificate model.
+for every admissible normalized placement $`v`$ in the recorded reduced domain of the certificate model.
 
 <p align="center">
   <img src="assets/figures/geometry.png" alt="Normalized placement of the three Brass-Sharifi test sets" width="45%">
@@ -107,7 +107,7 @@ for every admissible normalized placement $v$ in the recorded reduced domain of 
 
 ### 3.4 From placement lower bounds to convex-cover lower bounds
 
-Once the placement-level inequality is known for all admissible normalized placements, the convex-cover consequence follows from convexity. If $K$ is a convex universal cover, then $K$ contains congruent copies of $C$, $T$, and $P_5$. Hence $K$ contains the convex hull of those copies, and the normalized hull area is one of the values controlled by $A(v)$.
+Once the placement-level inequality is known for all admissible normalized placements, the convex-cover consequence follows from convexity. If $`K`$ is a convex universal cover, then $`K`$ contains congruent copies of $`C`$, $`T`$, and $`P_{5}`$. Hence $`K`$ contains the convex hull of those copies, and the normalized hull area is one of the values controlled by $`A(v)`$.
 
 ---
 
@@ -145,11 +145,11 @@ This is not a failure. It means that the repository is an author-reviewed reprod
 
 The lower bound itself is due to Brass and Sharifi. The additional proof-organization contribution here is to separate the computation into explicit layers:
 
-1. a placement-level inequality for $A(v)$;
+1. a placement-level inequality for $`A(v)`$;
 2. a recorded domain-cover relation for normalized placements;
 3. local lower-bound certificates on terminal route domains;
 4. a finite-cover implication that aggregates local certificates;
-5. a convex universal-cover consequence for $\alpha_{\mathrm{cvx}}$;
+5. a convex universal-cover consequence for $`\alpha_{\mathrm{cvx}}`$;
 6. an explicit proof-obligation record, grouped as OB-A through OB-F.
 
 ### 5.2 Verification and artifact contribution
@@ -196,22 +196,22 @@ Branch A denotes a symbolic domain-reduction route. This repository does not cla
 
 ### 7.2 Branch B: the adopted enlarged-domain replay route
 
-Branch B denotes the enlarged-domain replay route used by the public certificate. The replay checks a recorded enlarged domain $\Omega_B$ that contains the admissible normalized domain represented in the certificate model.
+Branch B denotes the enlarged-domain replay route used by the public certificate. The replay checks a recorded enlarged domain $`\Omega_{B}`$ that contains the admissible normalized domain represented in the certificate model.
 
 ### 7.3 The domain relation
 
 The certificate-level domain relation is
 
-$$
-\Omega_{\mathrm{adm}} \subseteq \Omega_B
-\subseteq \bigcup_{r\in\mathcal R}\Omega_r.
-$$
+```math
+\Omega_{\mathrm{adm}} \subseteq \Omega_{B}
+\subseteq \bigcup_{r\in\mathcal{R}}\Omega_{r}.
+```
 
-Here $\Omega_{\mathrm{adm}}$ is the recorded reduced admissible normalized placement domain, $\Omega_B$ is the enlarged Branch-B replay domain, and $\Omega_r$ is the terminal-route domain for route $r$.
+Here $`\Omega_{\mathrm{adm}}`$ is the recorded reduced admissible normalized placement domain, $`\Omega_{B}`$ is the enlarged Branch-B replay domain, and $`\Omega_{r}`$ is the terminal-route domain for route $`r`$.
 
 ### 7.4 Why Branch B is conservative?
 
-The Branch-B route is conservative in the required direction: proving the lower bound on the larger recorded domain $\Omega_B$ is stronger than proving it only on $\Omega_{\mathrm{adm}}$. All public certificate claims in this repository use Branch B, not Branch A.
+The Branch-B route is conservative in the required direction: proving the lower bound on the larger recorded domain $`\Omega_{B}`$ is stronger than proving it only on $`\Omega_{\mathrm{adm}}`$. All public certificate claims in this repository use Branch B, not Branch A.
 
 ---
 
@@ -219,23 +219,23 @@ The Branch-B route is conservative in the required direction: proving the lower 
 
 ### 8.1 The common post-guard interface
 
-For each terminal route $r$, the local verifier records a post-guard lower bound $L^{\mathrm{post}}_r$ satisfying
+For each terminal route $`r`$, the local verifier records a post-guard lower bound $`L^{\mathrm{post}}_{r}`$ satisfying
 
-$$
-L^{\mathrm{post}}_r \leq \inf_{w\in\Omega_r} A(w),
+```math
+L^{\mathrm{post}}_{r} \leq \inf_{w\in\Omega_{r}} A(w),
 \qquad
-L^{\mathrm{post}}_r - 0.832 \geq 10^{-7}.
-$$
+L^{\mathrm{post}}_{r} - 0.832 \geq 10^{-7}.
+```
 
-Therefore, for every $v\in\Omega_r$,
+Therefore, for every $`v\in\Omega_{r}`$,
 
-$$
+```math
 A(v)
-\geq \inf_{w\in\Omega_r}A(w)
-\geq L^{\mathrm{post}}_r
+\geq \inf_{w\in\Omega_{r}}A(w)
+\geq L^{\mathrm{post}}_{r}
 \geq 0.832 + 10^{-7}
 > 0.832.
-$$
+```
 
 The three local certificate families differ in how they produce their post-guard records. They enter the final aggregation through this same route-level interface.
 
@@ -243,30 +243,30 @@ The three local certificate families differ in how they produce their post-guard
 
 The directed interval family is the main local certificate family. It discharges 338,367 terminal routes using 41,261 directed rows. The smallest recorded post-guard margin above 0.832 is approximately
 
-$$
+```math
 4.307276422\times 10^{-6}.
-$$
+```
 
 ### 8.3 Local tensor certificates
 
 The local tensor family handles 18,380 terminal routes through tensor member and package records. It uses 8,751 tensor members organized into 125 packages. The smallest recorded post-guard margin above 0.832 is approximately
 
-$$
+```math
 2.318262102\times 10^{-5}.
-$$
+```
 
-### 8.4 The $h=0.004$ bridge
+### 8.4 The $`h=0.004`$ bridge
 
-The $h=0.004$ bridge covers a residual set of 69 terminal routes through 282 frozen bridge witness rows. In the final aggregation it is treated as a separate bridge component rather than being absorbed into the directed or tensor families.
+The $`h=0.004`$ bridge covers a residual set of 69 terminal routes through 282 frozen bridge witness rows. In the final aggregation it is treated as a separate bridge component rather than being absorbed into the directed or tensor families.
 
 ### 8.5 How the three families enter the aggregation
 
-Every terminal route is assigned to exactly one of the three families. Once the local record for route $r$ is accepted, the final aggregation uses only the route-level statement
+Every terminal route is assigned to exactly one of the three families. Once the local record for route $`r`$ is accepted, the final aggregation uses only the route-level statement
 
-$$
+```math
 A(v)\geq 0.832,
-\qquad v\in\Omega_r.
-$$
+\qquad v\in\Omega_{r}.
+```
 
 ---
 
@@ -276,26 +276,26 @@ $$
 
 Assume the domain relation
 
-$$
-\Omega_{\mathrm{adm}} \subseteq \Omega_B
-\subseteq \bigcup_{r\in\mathcal R}\Omega_r
-$$
+```math
+\Omega_{\mathrm{adm}} \subseteq \Omega_{B}
+\subseteq \bigcup_{r\in\mathcal{R}}\Omega_{r}
+```
 
 and assume that every terminal route satisfies
 
-$$
+```math
 A(v)\geq 0.832,
-\qquad v\in\Omega_r.
-$$
+\qquad v\in\Omega_{r}.
+```
 
 Then every admissible normalized placement satisfies
 
-$$
+```math
 A(v)\geq 0.832,
 \qquad v\in\Omega_{\mathrm{adm}}.
-$$
+```
 
-Indeed, if $v\in\Omega_{\mathrm{adm}}$, then $v\in\Omega_B$, and hence $v$ lies in at least one terminal-route domain $\Omega_r$. The local certificate for that route gives the inequality.
+Indeed, if $`v\in\Omega_{\mathrm{adm}}`$, then $`v\in\Omega_{B}`$, and hence $`v`$ lies in at least one terminal-route domain $`\Omega_{r}`$. The local certificate for that route gives the inequality.
 
 ### 9.2 BS0832 certificate theorem
 
@@ -306,25 +306,25 @@ The BS0832 certificate theorem says that, under the stated verifier and proof-ob
 
 The certificate theorem therefore yields the placement-level inequality
 
-$$
+```math
 A(v)\geq 0.832
-$$
+```
 
 for all admissible normalized placements recorded by the certificate domain model.
 
 ### 9.3 Convex universal-cover consequence
 
-If $K$ is a convex universal cover, then $K$ contains congruent copies of $C$, $T$, and $P_5$. Since $K$ is convex, it contains their convex hull. After normalization, that hull has area $A(v)$ for an admissible placement $v$. Hence
+If $`K`$ is a convex universal cover, then $`K`$ contains congruent copies of $`C`$, $`T`$, and $`P_{5}`$. Since $`K`$ is convex, it contains their convex hull. After normalization, that hull has area $`A(v)`$ for an admissible placement $`v`$. Hence
 
-$$
-\operatorname{area}(K)\geq A(v)\geq 0.832.
-$$
+```math
+\mathrm{area}(K)\geq A(v)\geq 0.832.
+```
 
 Taking the infimum over all convex universal covers gives
 
-$$
+```math
 \alpha_{\mathrm{cvx}}\geq 0.832.
-$$
+```
 
 ### 9.4 Logical dependency structure
 
@@ -351,7 +351,7 @@ The figure summarizes the dependency chain: Branch-B domain relation plus local 
 |---|---:|
 | Directed interval certificates | 338,367 |
 | Local tensor certificates | 18,380 |
-| $h=0.004$ bridge | 69 |
+| $`h=0.004`$ bridge | 69 |
 | **Total** | **356,816** |
 
 ### 10.3 Supporting certificate tables
@@ -361,15 +361,15 @@ The figure summarizes the dependency chain: Branch-B domain relation plus local 
 | Directed interval rows | 41,261 |
 | Local tensor members | 8,751 |
 | Local tensor packages | 125 |
-| $h=0.004$ bridge witnesses | 282 |
+| $`h=0.004`$ bridge witnesses | 282 |
 
 ### 10.4 Post-guard margins and acceptance threshold
 
 | Family | Minimum post-guard margin above 0.832 |
 |---|---:|
-| Directed interval | approximately $4.307276422\times 10^{-6}$ |
-| Local tensor | approximately $2.318262102\times 10^{-5}$ |
-| Verifier acceptance threshold | $10^{-7}$ |
+| Directed interval | approximately $`4.307276422\times 10^{-6}`$ |
+| Local tensor | approximately $`2.318262102\times 10^{-5}`$ |
+| Verifier acceptance threshold | $`10^{-7}`$ |
 
 The bridge records pass their zero-violation check for the residual route set assigned to that component.
 
@@ -673,7 +673,7 @@ The repository concerns only the Brass-Sharifi 0.832 convex lower bound. It does
 
 ### 20.5 No unrestricted nonconvex claim
 
-The repository concerns the convex quantity $\alpha_{\mathrm{cvx}}$. It does not assert a lower bound for the unrestricted nonconvex universal-cover problem.
+The repository concerns the convex quantity $`\alpha_{\mathrm{cvx}}`$. It does not assert a lower bound for the unrestricted nonconvex universal-cover problem.
 
 ### 20.6 No proof-assistant formalization claim
 
