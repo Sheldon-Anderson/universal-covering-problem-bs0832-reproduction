@@ -35,12 +35,12 @@ The repository includes the certificate-chain archives needed for local verifica
 
 ## 1. What this repository verifies
 
-Let $\mathcal U_{\mathrm{cvx}}$ be the class of convex universal covers and set
+Let $\mathcal{U}_{\mathrm{cvx}}$ be the class of convex universal covers and set
 
 $$
 \alpha_{\mathrm{cvx}}
 =
-\inf_{K\in\mathcal U_{\mathrm{cvx}}}\operatorname{area}(K).
+\inf_{K\in\mathcal{U}_{\mathrm{cvx}}}\mathrm{area}(K).
 $$
 
 The certificate verifies that every normalized placement in the Brass-Sharifi convex three-test-set framework has hull area at least $\tau=0.83201$. The finite-cover implication then gives $\alpha_{\mathrm{cvx}}\ge0.83201$.
@@ -61,7 +61,7 @@ The proof is organized as a chain of finite mathematical checks.
 
 ### Step 1. From a convex universal cover to a three-test-set hull
 
-If $K\in\mathcal U_{\mathrm{cvx}}$, then $K$ contains congruent copies of $C$, $T$, and $P_5$. Since $K$ is convex, it contains their convex hull.
+If $K\in\mathcal{U}_{\mathrm{cvx}}$, then $K$ contains congruent copies of $C$, $T$, and $P_5$. Since $K$ is convex, it contains their convex hull.
 
 ### Step 2. From normalized placements to the hull-area function
 
@@ -78,9 +78,9 @@ With $R_\rho$ denoting rotation by angle $\rho$, set
 $$
 X(v)=C\cup(T+u_3)\cup(R_\rho P_5+u_5),
 \qquad
-H(v)=\operatorname{conv}X(v),
+H(v)=\mathrm{conv}(X(v)),
 \qquad
-A(v)=\operatorname{area}(H(v)).
+A(v)=\mathrm{area}(H(v)).
 $$
 
 Thus a lower bound for $A(v)$ on the admissible normalized domain gives a lower bound for the area of every convex universal cover.
@@ -105,10 +105,10 @@ $$
 On the witness domains, the certificate gives points $Q_B(v)\subseteq X(v)$. Therefore
 
 $$
-W_B(v)=\operatorname{conv} Q_B(v)\subseteq H(v),
+W_B(v)=\mathrm{conv}(Q_B(v))\subseteq H(v),
 $$
 
-so $A(v)\ge\operatorname{area}(W_B(v))$. The verifier checks witness containment, a certified cyclic order, and shoelace lower endpoints using outward-rounded interval arithmetic.
+so $A(v)\ge\mathrm{area}(W_B(v))$. The verifier checks witness containment, a certified cyclic order, and shoelace lower endpoints using outward-rounded interval arithmetic.
 
 ### Step 5. From local inequalities to the convex lower bound
 

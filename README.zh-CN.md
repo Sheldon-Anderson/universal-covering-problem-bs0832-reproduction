@@ -37,12 +37,12 @@ $$
 
 Lebesgue 万有覆盖问题研究：平面中面积尽可能小的集合，是否能包含每一个直径为 1 的平面集合的一个全等副本。
 
-本文档只讨论凸版本。也就是说，覆盖集合 $K$ 要求是凸集。记凸万有覆盖集合类为 $\mathcal U_{\mathrm{cvx}}$，并定义
+本文档只讨论凸版本。也就是说，覆盖集合 $K$ 要求是凸集。记凸万有覆盖集合类为 $\mathcal{U}_{\mathrm{cvx}}$，并定义
 
 $$
 \alpha_{\mathrm{cvx}}
 =
-\inf_{K\in\mathcal U_{\mathrm{cvx}}}\operatorname{area}(K).
+\inf_{K\in\mathcal{U}_{\mathrm{cvx}}}\mathrm{area}(K).
 $$
 
 本仓库验证的是 $\alpha_{\mathrm{cvx}}\ge0.83201$ 这个凸版本证书结论。
@@ -78,7 +78,7 @@ $$
 
 ### 第一步：从凸万有覆盖集合得到三测试集凸包
 
-若 $K\in\mathcal U_{\mathrm{cvx}}$，则 $K$ 包含圆盘 $C$、等边三角形 $T$ 和正五边形 $P_5$ 的全等副本。因为 $K$ 是凸的，所以它包含这三个副本的凸包。
+若 $K\in\mathcal{U}_{\mathrm{cvx}}$，则 $K$ 包含圆盘 $C$、等边三角形 $T$ 和正五边形 $P_5$ 的全等副本。因为 $K$ 是凸的，所以它包含这三个副本的凸包。
 
 ### 第二步：用归一化参数描述凸包面积
 
@@ -97,9 +97,9 @@ $$
 $$
 X(v)=C\cup(T+u_3)\cup(R_\rho P_5+u_5),
 \qquad
-H(v)=\operatorname{conv}X(v),
+H(v)=\mathrm{conv}(X(v)),
 \qquad
-A(v)=\operatorname{area}(H(v)).
+A(v)=\mathrm{area}(H(v)).
 $$
 
 因此，只要能在容许域 $\Omega_{\mathrm{adm}}$ 上证明 $A(v)$ 的统一下界，就能得到凸万有覆盖集合的面积下界。
@@ -124,10 +124,10 @@ $$
 在 witness domains 上，证书给出一组见证点 $Q_B(v)\subseteq X(v)$。于是
 
 $$
-W_B(v)=\operatorname{conv}Q_B(v)\subseteq H(v),
+W_B(v)=\mathrm{conv}(Q_B(v))\subseteq H(v),
 $$
 
-所以 $A(v)\ge\operatorname{area}(W_B(v))$。验证程序再用向外舍入区间算术检查循环顺序和鞋带公式面积下界。
+所以 $A(v)\ge\mathrm{area}(W_B(v))$。验证程序再用向外舍入区间算术检查循环顺序和鞋带公式面积下界。
 
 ### 第五步：合并所有局部下界
 
