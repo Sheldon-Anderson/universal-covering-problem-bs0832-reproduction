@@ -1,2 +1,2 @@
-# Core scripts use the Python standard library. python-flint is recommended.
-python-flint>=0.8.0
+# This file is intentionally empty.
+# The public replay and repository-check scripts use only the Python standard library.

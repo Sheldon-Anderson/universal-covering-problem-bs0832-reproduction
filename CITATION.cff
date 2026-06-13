@@ -4,8 +4,8 @@ message: "If you use this certificate package, please cite the accompanying pape
 authors:
   - family-names: Xie
     given-names: Niantao
-version: "v144"
-date-released: "2026-06-10"
+version: "v152"
+date-released: "2026-06-13"
 repository-code: "https://github.com/Sheldon-Anderson/lebesgue-universal-cover-new-lower-bound-certificate"
 license: "MIT"
 keywords:

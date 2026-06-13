@@ -4,11 +4,22 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from ucbs.certificate.archive_io import relative_label, resolve_archive
 from ucbs.certificate.construction_audit import check_construction_audit
 from ucbs.certificate.final_adjudication import check_final_adjudication
 from ucbs.certificate.per_record_evidence import check_per_record_evidence
-from ucbs.certificate.validation import CERTIFIED_THRESHOLD_TEXT, ComponentReport, append_log, check_row, clean_run_dir, failed_rows, make_feedback_zip, now_utc, with_summary, write_csv, write_json
+from ucbs.certificate.validation import (
+    CERTIFIED_THRESHOLD_TEXT,
+    ComponentReport,
+    append_log,
+    check_row,
+    clean_run_dir,
+    failed_rows,
+    make_feedback_zip,
+    now_utc,
+    with_summary,
+    write_csv,
+    write_json,
+)
 from ucbs.certificate.witness_construction import check_witness_construction
 from ucbs.verification.artifact_checks import CertificateInputs, check_required_inputs, resolve_inputs
 

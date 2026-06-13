@@ -11,6 +11,12 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Iterable
 
+DiagnosticRow = dict[str, Any]
+"""One diagnostic row written to a CSV file."""
+
+CsvRow = dict[str, str]
+"""One row read from a certificate CSV file."""
+
 CERTIFIED_THRESHOLD = Decimal("0.83201")
 CERTIFIED_THRESHOLD_TEXT = "0.83201"
 
@@ -36,12 +42,35 @@ def truthy(value: Any) -> bool:
         return True
     if value is False or value is None:
         return False
-    return str(value).strip().lower() in {"true", "1", "yes", "passed", "pass", "ok", "closed", "discharged", "present", "present_locked"}
+    return str(value).strip().lower() in {
+        "true",
+        "1",
+        "yes",
+        "passed",
+        "pass",
+        "ok",
+        "closed",
+        "discharged",
+        "present",
+        "present_locked",
+    }
 
 
 def status_passed(value: Any) -> bool:
     """Return whether a serialized status value is a passing status."""
-    return str(value).strip().lower() in {"passed", "pass", "ok", "closed", "discharged", "present", "present_locked", "empty", "clean", "success", "success_gate_passed_for_final_adjudication"}
+    return str(value).strip().lower() in {
+        "passed",
+        "pass",
+        "ok",
+        "closed",
+        "discharged",
+        "present",
+        "present_locked",
+        "empty",
+        "clean",
+        "success",
+        "success_gate_passed_for_final_adjudication",
+    }
 
 
 def to_decimal(value: Any) -> Decimal | None:
@@ -61,8 +90,14 @@ def threshold_cleared(value: Any, threshold: Decimal = CERTIFIED_THRESHOLD) -> b
     return parsed is not None and parsed >= threshold
 
 
-def check_row(check: str, passed: bool, value: Any = "", summary: str = "", **extra: Any) -> dict[str, Any]:
-    """Build one diagnostic row."""
+def check_row(
+    check: str,
+    passed: bool,
+    value: Any = "",
+    summary: str = "",
+    **extra: Any,
+) -> DiagnosticRow:
+    """Build one diagnostic row for a replay or repository-check table."""
     row = {"check": check, "passed": bool(passed), "value": value, "summary": summary}
     row.update(extra)
     return row
@@ -77,10 +112,20 @@ def failed_rows(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return failed
 
 
-def summary_row(name: str, rows: Iterable[dict[str, Any]], ok: str, bad: str) -> dict[str, Any]:
+def summary_row(
+    name: str,
+    rows: Iterable[DiagnosticRow],
+    ok: str,
+    bad: str,
+) -> DiagnosticRow:
     """Return a standard summary row for a diagnostic table."""
     failures = failed_rows(rows)
-    return {"check": f"{name}_summary", "issue_count": len(failures), "passed": len(failures) == 0, "summary": ok if not failures else bad}
+    return {
+        "check": f"{name}_summary",
+        "issue_count": len(failures),
+        "passed": len(failures) == 0,
+        "summary": ok if not failures else bad,
+    }
 
 
 def with_summary(name: str, rows: list[dict[str, Any]], ok: str, bad: str) -> list[dict[str, Any]]:
@@ -88,7 +133,11 @@ def with_summary(name: str, rows: list[dict[str, Any]], ok: str, bad: str) -> li
     return [*rows, summary_row(name, rows, ok, bad)]
 
 
-def write_csv(path: Path, rows: Iterable[dict[str, Any]], fieldnames: list[str] | None = None) -> None:
+def write_csv(
+    path: Path,
+    rows: Iterable[DiagnosticRow],
+    fieldnames: list[str] | None = None,
+) -> None:
     """Write rows to CSV with a deterministic header."""
     path.parent.mkdir(parents=True, exist_ok=True)
     rows = list(rows)
@@ -139,6 +188,76 @@ def make_feedback_zip(run_dir: Path, name: str) -> Path:
     return feedback
 
 
+
+def require_columns(
+    rows: list[dict[str, Any]],
+    columns: set[str],
+    table: str,
+) -> list[DiagnosticRow]:
+    """Return schema diagnostic rows for a required certificate CSV table."""
+    if not rows:
+        return [check_row(f"{table}_nonempty", False, 0, f"{table} must not be empty")]
+    observed = set().union(*(row.keys() for row in rows)) if rows else set()
+    missing = sorted(columns - observed)
+    rows_out = [check_row(f"{table}_nonempty", True, len(rows), f"{table} has rows")]
+    rows_out.append(
+        check_row(
+            f"{table}_schema",
+            not missing,
+            ";".join(missing),
+            f"{table} contains required columns"
+            if not missing
+            else f"{table} is missing required columns",
+        )
+    )
+    return rows_out
+
+
+def require_exact_count(rows: list[dict[str, Any]], expected: int, table: str) -> dict[str, Any]:
+    """Return a diagnostic row for an exact row-count invariant."""
+    return check_row(f"{table}_expected_count", len(rows) == expected, len(rows), f"{table} has expected row count {expected}")
+
+
+def require_min_count(rows: list[dict[str, Any]], minimum: int, table: str) -> dict[str, Any]:
+    """Return a diagnostic row for a minimum row-count invariant."""
+    return check_row(f"{table}_minimum_count", len(rows) >= minimum, len(rows), f"{table} has at least {minimum} rows")
+
+
+def duplicate_key_values(rows: list[dict[str, Any]], keys: list[str]) -> list[str]:
+    """Return duplicate composite-key values from a CSV table."""
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for row in rows:
+        value = "|".join(str(row.get(key, "")) for key in keys)
+        if value in seen and value not in duplicates:
+            duplicates.append(value)
+        seen.add(value)
+    return duplicates
+
+
+def require_unique_keys(rows: list[dict[str, Any]], keys: list[str], table: str) -> dict[str, Any]:
+    """Return a diagnostic row requiring a unique composite key."""
+    duplicates = duplicate_key_values(rows, keys)
+    return check_row(
+        f"{table}_unique_key",
+        not duplicates,
+        len(duplicates),
+        f"{table} has unique key {','.join(keys)}",
+        duplicate_keys=";".join(duplicates[:10]),
+    )
+
+
+def require_expected_values(rows: list[dict[str, Any]], field: str, expected: set[str], table: str) -> dict[str, Any]:
+    """Return a diagnostic row requiring all values in a field to match an expected set."""
+    bad = sorted({str(row.get(field, "")) for row in rows if str(row.get(field, "")) not in expected})
+    return check_row(
+        f"{table}_{field}_expected_values",
+        not bad,
+        ";".join(bad),
+        f"{table}.{field} values are expected",
+    )
+
+
 def write_component_outputs(
     *,
     root: Path,
@@ -150,7 +269,21 @@ def write_component_outputs(
     archive_label: str,
     log_level: str,
 ) -> Path:
-    """Write a standard component replay run directory and return its feedback ZIP."""
+    """Write a standard component replay run directory.
+
+    Args:
+        root: Repository root.
+        run_id: Name of the output directory under ``runs``.
+        log_name: Name of the component log file.
+        status_name: Name of the component status JSON file.
+        feedback_name: Name of the feedback ZIP to create.
+        report: Component verification result.
+        archive_label: Repository-relative archive label for logs and status files.
+        log_level: Logging-level label stored in the component log.
+
+    Returns:
+        Path to the generated feedback ZIP.
+    """
     run_dir = clean_run_dir(root, run_id, ["diagnostics", "status", "log", "report"])
     log_path = run_dir / "log" / log_name
     log_path.write_text(

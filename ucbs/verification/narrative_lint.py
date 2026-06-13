@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+INLINE_CODE_PATTERN = re.compile(r"`[^`]*`")
+
 FORBIDDEN_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\blegacy\b", re.I), "legacy storyline wording"),
     (re.compile(r"\breproduction\b", re.I), "reproduction storyline wording"),
@@ -31,8 +33,9 @@ def checked_text_files(root: Path) -> list[Path]:
 
 
 def _strip_fenced_code(text: str) -> str:
-    """Remove fenced code blocks from narrative checks."""
-    return re.sub(r"```.*?```", lambda match: "\n" * match.group(0).count("\n"), text, flags=re.DOTALL)
+    """Remove fenced code blocks and inline code from narrative checks."""
+    stripped = re.sub(r"```.*?```", lambda match: "\n" * match.group(0).count("\n"), text, flags=re.DOTALL)
+    return INLINE_CODE_PATTERN.sub(lambda match: " " * len(match.group(0)), stripped)
 
 
 def check_narrative_lint(root: Path) -> list[dict[str, object]]:

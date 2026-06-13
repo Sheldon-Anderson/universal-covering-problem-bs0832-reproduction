@@ -16,4 +16,22 @@ The verified statement is a finite-certificate lower bound in the convex Brass-S
 
 ## Public wording rule
 
-Public documentation should say "finite certificate", "certificate verification", "witness construction", and "construction audit". It should not use internal development labels as the main public narrative.
+Public documentation should say "finite certificate", "certificate verification", "witness construction", and "construction audit". Internal raw-record labels should not be used as the main public narrative.
+
+
+## Allowed wording
+
+- finite certificate
+- certificate verification
+- convex Brass-Sharifi three-test-set framework
+- witness construction
+- construction audit
+- final adjudication
+
+## Forbidden wording
+
+- Do not write: solves the Lebesgue universal cover problem
+- Do not write: proves an unrestricted nonconvex lower bound
+- Do not write: completes proof-assistant formalization
+- Do not write: completes independent external verification
+- Do not write: reruns the original geometric search

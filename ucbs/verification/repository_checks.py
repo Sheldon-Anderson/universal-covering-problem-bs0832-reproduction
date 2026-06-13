@@ -1,8 +1,10 @@
 """Repository-level checks for the public certified lower-bound package."""
 from __future__ import annotations
 
+import ast
 import csv
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -11,6 +13,17 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+
+ALLOWED_RAW_STAGE_FILES = {
+    "docs/artifact_structure.md",
+    "docs/data_dictionary.md",
+    "docs/faq.md",
+    "certificate/public/CERTIFICATE_INDEX.md",
+}
+"""Public docs allowed to mention raw v133--v136 provenance labels."""
+
+RAW_STAGE_PATTERN = re.compile(r"\bv13[3-6]\b", re.IGNORECASE)
+"""Raw internal generation-stage labels preserved only for provenance."""
 
 from ucbs.verification.artifact_checks import verify_key_artifact_hashes
 from ucbs.verification.claim_boundary import check_claim_boundary
@@ -84,13 +97,58 @@ def _rel(path: Path, root: Path) -> str:
 
 
 def check_python_compile(root: Path) -> list[dict[str, Any]]:
-    """Compile every Python source file under ``ucbs`` and ``scripts``."""
-    files = sorted([*root.glob("ucbs/**/*.py"), *root.glob("scripts/*.py")])
+    """Compile Python source files under ``ucbs``, ``scripts``, and ``tests``."""
+    files = sorted([*root.glob("ucbs/**/*.py"), *root.glob("scripts/*.py"), *root.glob("tests/*.py")])
     if not files:
         return [{"check": "python_compile", "passed": False, "file_count": 0, "output": "no Python files found"}]
     cmd = [sys.executable, "-m", "py_compile", *map(str, files)]
     proc = subprocess.run(cmd, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
     return [{"check": "python_compile", "passed": proc.returncode == 0, "file_count": len(files), "output": proc.stdout[-2000:]}]
+
+
+
+def check_script_entry_points(root: Path) -> list[dict[str, Any]]:
+    """Check public script wrappers and the direct-run bootstrap helper.
+
+    ``scripts/_bootstrap.py`` is the only public script allowed to mutate
+    ``sys.path``. It supports direct source-tree commands such as
+    ``python scripts/verify_certificate.py`` before editable installation.
+    All other scripts must delegate to ``ucbs.cli`` entry points.
+    """
+    rows: list[dict[str, Any]] = []
+    scripts = sorted(root.glob("scripts/*.py"))
+    for path in scripts:
+        rel = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8", errors="replace")
+        is_bootstrap = rel == "scripts/_bootstrap.py"
+        rows.append(
+            {
+                "check": "script_sys_path_policy",
+                "path": rel,
+                "passed": ("sys.path.insert" not in text) or is_bootstrap,
+                "summary": "only scripts/_bootstrap.py may mutate sys.path",
+            }
+        )
+        rows.append(
+            {
+                "check": "script_imports_ucbs_cli",
+                "path": rel,
+                "passed": is_bootstrap or "from ucbs.cli." in text,
+                "summary": (
+                    "bootstrap helper is exempt from ucbs.cli delegation"
+                    if is_bootstrap
+                    else "script delegates to ucbs.cli entry point"
+                ),
+            }
+        )
+    return rows or [
+        {
+            "check": "script_entry_points",
+            "passed": False,
+            "path": "scripts",
+            "summary": "no public scripts found",
+        }
+    ]
 
 
 def check_pyproject_config(root: Path) -> list[dict[str, Any]]:
@@ -103,7 +161,10 @@ def check_pyproject_config(root: Path) -> list[dict[str, Any]]:
         {"check": "pyproject_exists", "passed": True, "path": "pyproject.toml", "summary": "pyproject.toml is present"},
         {"check": "pyproject_uses_ucbs_package", "passed": "ucbs*" in text or "ucbs" in text, "path": "pyproject.toml", "summary": "package discovery includes ucbs"},
         {"check": "pyproject_no_stale_app_package", "passed": "packages = [\"app\"]" not in text and "packages = ['app']" not in text, "path": "pyproject.toml", "summary": "stale app package is not referenced"},
+        {"check": "pyproject_console_scripts", "passed": "[project.scripts]" in text and "ucbs-verify-certificate" in text, "path": "pyproject.toml", "summary": "console-script entry points are declared"},
+        {"check": "pyproject_no_release_zip_entry", "passed": "ucbs-make-release-zip" not in text, "path": "pyproject.toml", "summary": "release-zip helper is not exposed as a console script"},
     ]
+
 
 
 def check_layout(root: Path) -> list[dict[str, Any]]:
@@ -116,7 +177,9 @@ def check_layout(root: Path) -> list[dict[str, Any]]:
         "ucbs",
         "ucbs/certificate",
         "ucbs/verification",
+        "ucbs/cli",
         "scripts",
+        "scripts/_bootstrap.py",
         "scripts/verify_certificate.py",
         "scripts/check_repository.py",
         "scripts/replay_certificate_chain.py",
@@ -131,7 +194,14 @@ def check_layout(root: Path) -> list[dict[str, Any]]:
         "docs/claim_scope.md",
         "docs/expected_outputs.md",
         "docs/reproducibility.md",
+        "docs/data_dictionary.md",
+        "docs/artifact_structure.md",
+        "docs/verification_design.md",
+        "certificate/manifest/CHECKSUM.md",
+        "certificate/public/CERTIFICATE_INDEX.md",
         "paper",
+        "paper/A_Certified_Lower_Bound_for_Lebesgues_Universal_Cover_Problem.pdf",
+        "tests",
     ]
     forbidden = [
         "release",
@@ -141,8 +211,12 @@ def check_layout(root: Path) -> list[dict[str, Any]]:
         "ucbs/legacy_bs0832",
         "certificate/target_083201",
         "certificate/legacy_bs0832",
-        "paper/source",
         "paper/preview",
+        "paper/pdf",
+        "paper/source",
+        "certificate/public/README.md",
+        "scripts/make_release_zip.py",
+        "ucbs/cli/make_release_zip.py",
         "scripts/verify_theorem_ready.py",
         "scripts/replay_inner_witness_certificate.py",
     ]
@@ -175,7 +249,7 @@ def check_empty_directories(root: Path) -> list[dict[str, Any]]:
 def check_english_only_comments(root: Path) -> list[dict[str, Any]]:
     """Return Python source lines that contain CJK characters."""
     rows: list[dict[str, Any]] = []
-    for path in sorted([*root.glob("ucbs/**/*.py"), *root.glob("scripts/*.py")]):
+    for path in sorted([*root.glob("ucbs/**/*.py"), *root.glob("scripts/*.py"), *root.glob("tests/*.py")]):
         for idx, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1):
             if any("\u4e00" <= ch <= "\u9fff" for ch in line):
                 rows.append({
@@ -186,6 +260,76 @@ def check_english_only_comments(root: Path) -> list[dict[str, Any]]:
                     "passed": False,
                     "summary": "CJK character found in Python source",
                 })
+    return rows
+
+
+def check_public_python_no_print(root: Path) -> list[dict[str, Any]]:
+    """Return public Python source lines that call ``print`` directly.
+
+    The check parses Python files with ``ast`` so comments, docstrings, and the
+    implementation of this check are not mistaken for actual print calls.
+    """
+    rows: list[dict[str, Any]] = []
+    files = sorted([*root.glob("ucbs/**/*.py"), *root.glob("scripts/*.py")])
+    for path in files:
+        rel = path.relative_to(root).as_posix()
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=rel)
+        except SyntaxError as exc:
+            rows.append(
+                {
+                    "check": "public_python_parse_for_print",
+                    "file": rel,
+                    "line": exc.lineno or 0,
+                    "passed": False,
+                    "summary": "Python source could not be parsed",
+                }
+            )
+            continue
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "print"
+            ):
+                rows.append(
+                    {
+                        "check": "public_python_no_print",
+                        "file": rel,
+                        "line": getattr(node, "lineno", 0),
+                        "passed": False,
+                        "summary": "use ucbs.cli.output.emit_summary instead of print",
+                    }
+                )
+    return rows
+
+
+def check_raw_stage_label_policy(root: Path) -> list[dict[str, Any]]:
+    """Return public Markdown locations with disallowed raw v133--v136 labels."""
+    rows: list[dict[str, Any]] = []
+    candidates = [root / "README.md", root / "README.zh-CN.md"]
+    for folder in [root / "docs", root / "certificate" / "public"]:
+        if folder.exists():
+            candidates.extend(folder.rglob("*.md"))
+    for path in sorted(path for path in candidates if path.exists()):
+        rel = path.relative_to(root).as_posix()
+        if rel in ALLOWED_RAW_STAGE_FILES:
+            continue
+        for idx, line in enumerate(
+            path.read_text(encoding="utf-8", errors="replace").splitlines(),
+            start=1,
+        ):
+            if RAW_STAGE_PATTERN.search(line):
+                rows.append(
+                    {
+                        "check": "raw_stage_label_policy",
+                        "file": rel,
+                        "line": idx,
+                        "text": line.strip()[:160],
+                        "passed": False,
+                        "summary": "raw v133--v136 labels are allowed only in provenance docs",
+                    }
+                )
     return rows
 
 
@@ -232,6 +376,9 @@ def run_repository_check(
     _append_log(log, "checking pyproject package metadata")
     diagnostics["pyproject"] = _with_summary("pyproject", check_pyproject_config(root), "pyproject package metadata is consistent", "pyproject package metadata failed")
 
+    _append_log(log, "checking public script entry points")
+    diagnostics["script_entry_points"] = _with_summary("script_entry_points", check_script_entry_points(root), "public scripts delegate to package entry points", "public script entry-point issue found")
+
     _append_log(log, "checking repository layout")
     diagnostics["layout"] = _with_summary("layout", check_layout(root), "repository layout is clean", "repository layout issue found")
 
@@ -240,6 +387,12 @@ def run_repository_check(
 
     _append_log(log, "checking English-only Python comments and docstrings")
     diagnostics["english_comments"] = _with_summary("english_comments", check_english_only_comments(root), "no CJK characters found in Python sources checked", "CJK characters found in Python sources checked")
+
+    _append_log(log, "checking direct print calls in public Python code")
+    diagnostics["public_python_no_print"] = _with_summary("public_python_no_print", check_public_python_no_print(root), "public Python code does not call print directly", "public Python print call found")
+
+    _append_log(log, "checking raw v13x provenance labels")
+    diagnostics["raw_stage_label_policy"] = _with_summary("raw_stage_label_policy", check_raw_stage_label_policy(root), "raw v13x labels appear only in provenance docs", "raw v13x label found outside allowed provenance docs")
 
     _append_log(log, "checking clean public narrative")
     diagnostics["narrative_lint"] = _with_summary("narrative_lint", check_narrative_lint(root), "public narrative is clean", "forbidden clean-story wording found")
@@ -278,7 +431,7 @@ def run_repository_check(
     status = "passed" if not failed else "failed"
     feedback = run_dir / "repository_check_feedback.zip"
     summary = {
-        "schema": "ucbs-public-repository-check-v5",
+        "schema": "ucbs-public-repository-check-v9",
         "status": status,
         "failed_step_count": len(failed),
         "run_id": run_id,

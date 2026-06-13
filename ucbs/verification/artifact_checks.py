@@ -51,6 +51,7 @@ def resolve_inputs(
     base = Path(artifact_root) if artifact_root else DEFAULT_ARTIFACT_ROOT
 
     def choose(explicit: Optional[str], default_name: str) -> Path:
+        """Resolve one explicit archive path or fall back to the default name."""
         return Path(explicit) if explicit else base / default_name
 
     return CertificateInputs(

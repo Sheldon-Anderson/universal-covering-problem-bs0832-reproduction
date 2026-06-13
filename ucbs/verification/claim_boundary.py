@@ -28,6 +28,7 @@ NEGATION_MARKERS = [
     "not assert",
     "not a claim",
     "no claim",
+    "do not",
     "neither",
     "remain false",
     "\u4e0d\u58f0\u79f0",

@@ -1,7 +1,21 @@
 [project]
 name = "lebesgue-universal-cover-new-lower-bound-certificate"
-version = "0.14.4"
+version = "0.15.2"
 description = "Finite certificate package for a certified lower bound in the convex Brass-Sharifi certificate setting."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Niantao Xie" }]
+keywords = [
+    "Lebesgue universal cover",
+    "convex geometry",
+    "finite certificate",
+    "interval arithmetic",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
 requires-python = ">=3.10"
 dependencies = []
 
@@ -12,3 +26,12 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["ucbs*"]
+
+[project.scripts]
+ucbs-verify-certificate = "ucbs.cli.verify_certificate:main"
+ucbs-check-repository = "ucbs.cli.check_repository:main"
+ucbs-replay-certificate-chain = "ucbs.cli.replay_certificate_chain:main"
+ucbs-replay-per-record-evidence = "ucbs.cli.replay_per_record_evidence:main"
+ucbs-replay-construction-audit = "ucbs.cli.replay_construction_audit:main"
+ucbs-replay-witness-construction = "ucbs.cli.replay_witness_construction:main"
+ucbs-replay-final-verification = "ucbs.cli.replay_final_adjudication:main"
